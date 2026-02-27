@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
       ? sprintCapacity > sprintCapacityLimit 
       : false;
 
-    const systemPrompt = `You are a project management assistant. Analyze project data and identify potential risks. Return a JSON array of risks with:
+    const systemPrompt = `You are a development project management assistant. Analyze board/sprint data and identify potential risks (delivery, blockers, capacity). Return a JSON array of risks with:
 - type: RISK type (OVERDUE, BLOCKED, OVERCAPACITY, LOW_COMPLETION)
 - severity: HIGH, MEDIUM, LOW
 - description: Brief description
@@ -144,7 +144,7 @@ ${isOverCapacity ? '⚠️ Sprint is OVER CAPACITY' : ''}
       } else {
         risks = JSON.parse(aiResponse);
       }
-    } catch (error) {
+    } catch (_error) {
       // Fallback to basic risks
       const basicRisks = [];
       if (overdueTasks.length > 0) {

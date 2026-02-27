@@ -34,6 +34,7 @@ const envConfig: EnvConfig = {
     "ANTHROPIC_API_KEY",
     "OLLAMA_URL",
     "REDIS_URL",
+    "CRON_SECRET",
   ],
   productionOnly: [
     "STRIPE_SECRET_KEY",

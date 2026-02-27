@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     await requirePaidSubscription(board.organizationId);
     await requireBoardAccess(boardId, "MEMBER");
 
-    const systemPrompt = `You are a project management assistant. Generate a detailed, actionable task description based on a task title and optional context. The description should be clear, specific, and include acceptance criteria if applicable.`;
+    const systemPrompt = `You are a development project management assistant. Generate a detailed, actionable task description for an engineering task based on the title and optional context. The description should be clear, specific, and include technical acceptance criteria when applicable.`;
 
     const userPrompt = `Generate a detailed task description for: "${title}"${context ? `\n\nContext: ${context}` : ""}`;
 

@@ -144,7 +144,7 @@ export function BoardHeader({
           return null;
         }
         return await res.json();
-      } catch (e) {
+      } catch (_e) {
         return null;
       }
     },

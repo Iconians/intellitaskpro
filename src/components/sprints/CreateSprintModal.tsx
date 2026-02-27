@@ -32,6 +32,7 @@ export function CreateSprintModal({
     const twoWeeksFromNow = new Date(today);
     twoWeeksFromNow.setDate(today.getDate() + 14);
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- set default date range on mount
     setStartDate((prev) => prev || today);
     setEndDate((prev) => prev || twoWeeksFromNow);
   }, []);

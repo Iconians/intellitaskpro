@@ -14,7 +14,7 @@ interface CustomField {
   name: string;
   type: CustomFieldType;
   required: boolean;
-  options: any;
+  options: unknown;
   order: number;
   isVisible: boolean;
 }
@@ -30,7 +30,7 @@ export function CustomFieldEditor({
     name: "",
     type: "TEXT" as CustomFieldType,
     required: false,
-    options: null as any,
+    options: null as unknown,
     isVisible: true,
   });
 

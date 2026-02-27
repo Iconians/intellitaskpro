@@ -204,7 +204,7 @@ export async function syncTaskToGitHub(taskId: string) {
               issue_number: task.githubIssueNumber,
               name: label,
             });
-          } catch (error) {
+          } catch (_error) {
             
           }
         }
@@ -218,7 +218,7 @@ export async function syncTaskToGitHub(taskId: string) {
           issue_number: task.githubIssueNumber,
           labels: [statusLabel],
         });
-      } catch (error) {
+      } catch (_error) {
         
         try {
           await githubClient.rest.issues.createLabel({

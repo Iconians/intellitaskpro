@@ -53,16 +53,14 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const systemPrompt = `You are a versatile project management assistant that works across all industries and business types. Analyze the given tasks and suggest priority levels (LOW, MEDIUM, HIGH, URGENT) based on:
+    const systemPrompt = `You are a development project management assistant. Analyze the given tasks and suggest priority levels (LOW, MEDIUM, HIGH, URGENT) based on:
 - Due dates (urgent if approaching)
-- Dependencies (higher priority if blocking others)
-- Business value and impact
-- Effort required
+- Dependencies (higher priority if blocking other work)
+- Technical impact (e.g. unblocking others, critical path)
+- Effort required and team capacity
 - Current workload of assignees
-- Strategic importance
-- Customer/stakeholder impact
 
-Consider the context of the business domain when prioritizing. Tasks should be prioritized based on their importance to achieving business goals, regardless of whether they're technical, operational, marketing, sales, HR, or any other type of work.
+Focus on development and delivery: prioritize work that unblocks the team, fixes critical bugs, or delivers the most value for the sprint.
 
 Return a JSON array with task IDs and suggested priorities:
 [
@@ -105,7 +103,7 @@ Return a JSON array with task IDs and suggested priorities:
       } else {
         suggestions = JSON.parse(aiResponse);
       }
-    } catch (error) {
+    } catch (_error) {
       return NextResponse.json(
         { error: "Failed to parse AI response" },
         { status: 500 }

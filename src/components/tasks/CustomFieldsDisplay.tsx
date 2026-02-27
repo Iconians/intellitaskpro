@@ -15,13 +15,13 @@ interface CustomField {
   name: string;
   type: CustomFieldType;
   required: boolean;
-  options: any;
+  options: unknown;
   isVisible: boolean;
 }
 
 interface TaskCustomField {
   id: string;
-  value: any;
+  value: unknown;
   customField: CustomField;
 }
 
@@ -32,7 +32,7 @@ export function CustomFieldsDisplay({
 }: CustomFieldsDisplayProps) {
   const queryClient = useQueryClient();
   const [editingFieldId, setEditingFieldId] = useState<string | null>(null);
-  const [editValue, setEditValue] = useState<any>(null);
+  const [editValue, setEditValue] = useState<unknown>(null);
 
   const { data: boardFields } = useQuery({
     queryKey: ["custom-fields", boardId],
@@ -58,7 +58,7 @@ export function CustomFieldsDisplay({
       value,
     }: {
       customFieldId: string;
-      value: any;
+      value: unknown;
     }) => {
       const res = await fetch(`/api/tasks/${taskId}/custom-fields`, {
         method: "POST",
@@ -88,7 +88,7 @@ export function CustomFieldsDisplay({
     updateFieldMutation.mutate({ customFieldId, value: editValue });
   };
 
-  const renderFieldValue = (field: CustomField, value: any) => {
+  const renderFieldValue = (field: CustomField, value: unknown) => {
     if (value === null || value === undefined) {
       return <span className="text-gray-400 italic">Not set</span>;
     }
@@ -97,15 +97,15 @@ export function CustomFieldsDisplay({
       case "CHECKBOX":
         return value ? "✓ Yes" : "✗ No";
       case "DATE":
-        return new Date(value).toLocaleDateString();
+        return new Date(value as string | number).toLocaleDateString();
       case "NUMBER":
-        return value.toString();
+        return String(value);
       default:
-        return value.toString();
+        return String(value);
     }
   };
 
-  const renderFieldInput = (field: CustomField, currentValue: any) => {
+  const renderFieldInput = (field: CustomField, currentValue: unknown) => {
     const value = currentValue ?? (field.type === "CHECKBOX" ? false : "");
 
     switch (field.type) {
@@ -114,7 +114,7 @@ export function CustomFieldsDisplay({
         return (
           <input
             type={field.type === "URL" ? "url" : "text"}
-            value={value}
+            value={String(value)}
             onChange={(e) => setEditValue(e.target.value)}
             className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           />
@@ -123,7 +123,7 @@ export function CustomFieldsDisplay({
         return (
           <input
             type="number"
-            value={value}
+            value={typeof value === "number" ? value : Number(value) || ""}
             onChange={(e) => setEditValue(parseFloat(e.target.value) || 0)}
             className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           />
@@ -132,7 +132,7 @@ export function CustomFieldsDisplay({
         return (
           <input
             type="date"
-            value={value ? new Date(value).toISOString().split("T")[0] : ""}
+            value={value ? new Date(value as string | number).toISOString().split("T")[0] : ""}
             onChange={(e) => setEditValue(e.target.value)}
             className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           />
@@ -141,7 +141,7 @@ export function CustomFieldsDisplay({
         const options = Array.isArray(field.options) ? field.options : [];
         return (
           <select
-            value={value}
+            value={String(value)}
             onChange={(e) => setEditValue(e.target.value)}
             className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           >
@@ -157,7 +157,7 @@ export function CustomFieldsDisplay({
         return (
           <input
             type="checkbox"
-            checked={value}
+            checked={Boolean(value)}
             onChange={(e) => setEditValue(e.target.checked)}
             className="rounded border-gray-300 dark:border-gray-600"
           />

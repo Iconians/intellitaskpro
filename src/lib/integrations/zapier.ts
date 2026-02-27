@@ -8,7 +8,7 @@ export interface ZapierWebhookPayload {
     taskId?: string;
     boardId?: string;
     organizationId?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 

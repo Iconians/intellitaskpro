@@ -65,7 +65,7 @@ export async function PATCH(
     });
 
     if (tag.boardId) {
-      await triggerPusherEvent(`board-${tag.boardId}`, "tag-updated", updatedTag);
+      await triggerPusherEvent(`private-board-${tag.boardId}`, "tag-updated", updatedTag);
     }
 
     return NextResponse.json(updatedTag);
@@ -111,7 +111,7 @@ export async function DELETE(
     });
 
     if (tag.boardId) {
-      await triggerPusherEvent(`board-${tag.boardId}`, "tag-deleted", { id });
+      await triggerPusherEvent(`private-board-${tag.boardId}`, "tag-deleted", { id });
     }
 
     return NextResponse.json({ success: true });

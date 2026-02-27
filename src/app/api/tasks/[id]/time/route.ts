@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { requireBoardAccess, getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { triggerPusherEvent } from "@/lib/pusher";
@@ -113,7 +114,7 @@ export async function POST(
       });
     }
 
-    await triggerPusherEvent(`board-${task.boardId}`, "time-entry-created", {
+    await triggerPusherEvent(`private-board-${task.boardId}`, "time-entry-created", {
       taskId: id,
       timeEntry,
     });
@@ -198,7 +199,7 @@ export async function DELETE(
       },
     });
 
-    await triggerPusherEvent(`board-${task.boardId}`, "time-entry-deleted", {
+    await triggerPusherEvent(`private-board-${task.boardId}`, "time-entry-deleted", {
       taskId: id,
       entryId,
     });
@@ -243,7 +244,7 @@ export async function PATCH(
 
     await requireBoardAccess(task.boardId, "MEMBER");
 
-    const updateData: any = {};
+    const updateData: Prisma.TimeEntryUpdateInput = {};
     if (endTime) updateData.endTime = new Date(endTime);
     if (duration !== undefined) updateData.duration = duration;
 
@@ -278,7 +279,7 @@ export async function PATCH(
       });
     }
 
-    await triggerPusherEvent(`board-${task.boardId}`, "time-entry-updated", {
+    await triggerPusherEvent(`private-board-${task.boardId}`, "time-entry-updated", {
       taskId: id,
       timeEntry,
     });

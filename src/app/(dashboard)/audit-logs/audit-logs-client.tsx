@@ -12,7 +12,7 @@ interface AuditLog {
   action: string;
   entityType: string;
   entityId: string;
-  changes: any;
+  changes: Record<string, unknown> | null;
   createdAt: string;
   user: {
     id: string;

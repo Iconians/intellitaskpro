@@ -43,6 +43,7 @@ export function TemplateEditor({
 
   useEffect(() => {
     if (template) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sync template from server to form state
       setName(template.name);
       setDescription(template.description || "");
       setTitle(template.title);
@@ -55,7 +56,7 @@ export function TemplateEditor({
   }, [template]);
 
   const createMutation = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: { name: string; description?: string | null; title: string; taskDescription?: string | null; priority: string; estimatedHours?: number | null; checklistItems?: Array<{ text: string; order?: number }>; tags?: string[]; organizationId?: string; boardId?: string }) => {
       const res = await fetch("/api/templates", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -89,7 +90,7 @@ export function TemplateEditor({
       taskDescription: taskDescription || null,
       priority,
       estimatedHours: estimatedHours ? parseFloat(estimatedHours) : null,
-      checklistItems: checklistItems.length > 0 ? checklistItems : null,
+      checklistItems: checklistItems.length > 0 ? checklistItems.map((item, order) => ({ text: item.text, order })) : undefined,
       tags,
     });
   };

@@ -100,7 +100,7 @@ export async function validateLinearConfig(config: LinearConfig): Promise<boolea
 
     const data = await response.json();
     return !data.errors && !!data.data?.viewer;
-  } catch (error) {
+  } catch (_error) {
     return false;
   }
 }

@@ -4,9 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "eslint src --max-warnings 0 && prisma generate && next build",
+    "ci": "bun run build && bun run test:e2e",
     "start": "next start",
-    "lint": "eslint",
+    "lint": "next lint",
+    "lint:eslint": "eslint src --max-warnings 0",
     "postinstall": "prisma generate",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
@@ -14,7 +16,11 @@
     "db:studio": "prisma studio",
     "migrate:grant-board-access": "bun prisma/migrations/grant_existing_board_access.ts",
     "db:seed": "bun prisma/seed.ts",
-    "update-stripe-prices": "bun scripts/update-stripe-prices.ts"
+    "update-stripe-prices": "bun scripts/update-stripe-prices.ts",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:report": "playwright show-report",
+    "test:e2e:list": "playwright test --reporter=list"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.20.9",
@@ -46,18 +52,26 @@
     "stripe": "^20.1.1",
     "tailwind-merge": "^2.6.0"
   },
+  "overrides": {
+    "baseline-browser-mapping": "^2.10.0"
+  },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.1",
+    "@axe-core/react": "^4.11.1",
+    "@playwright/test": "^1.58.2",
+    "@tanstack/react-query-devtools": "^5.91.2",
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20.19.27",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
-    "@types/bcryptjs": "^2.4.6",
-    "@tanstack/react-query-devtools": "^5.91.2",
+    "autoprefixer": "^10.4.23",
+    "baseline-browser-mapping": "^2.10.0",
     "eslint": "^9.39.2",
     "eslint-config-next": "16.0.9",
-    "typescript": "^5.9.3",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "postcss": "^8.5.6",
     "prisma": "^7.2.0",
     "tailwindcss": "^3.4.19",
-    "postcss": "^8.5.6",
-    "autoprefixer": "^10.4.23"
+    "typescript": "^5.9.3"
   }
 }

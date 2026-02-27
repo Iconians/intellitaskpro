@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { requireBoardAccess } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { triggerPusherEvent } from "@/lib/pusher";
@@ -79,7 +80,7 @@ export async function POST(
       },
     });
 
-    await triggerPusherEvent(`board-${task.boardId}`, "checklist-item-created", {
+    await triggerPusherEvent(`private-board-${task.boardId}`, "checklist-item-created", {
       taskId: id,
       checklistItem,
     });
@@ -119,7 +120,7 @@ export async function PATCH(
 
     await requireBoardAccess(task.boardId, "MEMBER");
 
-    const updateData: any = {};
+    const updateData: Prisma.ChecklistItemUpdateInput = {};
     if (text !== undefined) updateData.text = text;
     if (isCompleted !== undefined) updateData.isCompleted = isCompleted;
     if (order !== undefined) updateData.order = order;
@@ -129,7 +130,7 @@ export async function PATCH(
       data: updateData,
     });
 
-    await triggerPusherEvent(`board-${task.boardId}`, "checklist-item-updated", {
+    await triggerPusherEvent(`private-board-${task.boardId}`, "checklist-item-updated", {
       taskId: id,
       checklistItem,
     });
@@ -173,7 +174,7 @@ export async function DELETE(
       where: { id: itemId },
     });
 
-    await triggerPusherEvent(`board-${task.boardId}`, "checklist-item-deleted", {
+    await triggerPusherEvent(`private-board-${task.boardId}`, "checklist-item-deleted", {
       taskId: id,
       itemId,
     });

@@ -51,8 +51,9 @@ export function TimelineView({
   }
 
   const tasks = board.tasks || [];
+  type TaskWithDate = { id: string; title?: string | null; dueDate?: string | null; createdAt: string; status?: string | null };
   const tasksWithDates = tasks.filter(
-    (task: any) => task.dueDate || task.createdAt
+    (task: TaskWithDate) => task.dueDate || task.createdAt
   );
 
   const getDaysBetween = (start: Date, end: Date) => {
@@ -69,7 +70,7 @@ export function TimelineView({
   const totalDays = days.length;
   const dayWidth = 100 / totalDays;
 
-  const getTaskPosition = (task: any) => {
+  const getTaskPosition = (task: TaskWithDate) => {
     if (!task.dueDate && !task.createdAt) return null;
     const taskDate = new Date(task.dueDate || task.createdAt);
     const daysFromStart = Math.floor(
@@ -138,7 +139,7 @@ export function TimelineView({
 
           {/* Tasks */}
           <div className="relative mt-4">
-            {tasksWithDates.map((task: any, index: number) => {
+            {tasksWithDates.map((task: TaskWithDate, index: number) => {
               const position = getTaskPosition(task);
               if (!position) return null;
 
@@ -159,7 +160,7 @@ export function TimelineView({
                         ? "#ef4444"
                         : "#6b7280",
                   }}
-                  title={task.title}
+                  title={task.title ?? undefined}
                 >
                   {task.title}
                 </div>

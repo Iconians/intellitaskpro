@@ -39,7 +39,7 @@ export function BulkEditModal({ taskIds, boardId, onClose }: BulkEditModalProps)
   const members = board?.boardMembers || [];
 
   const bulkUpdateMutation = useMutation({
-    mutationFn: async (updates: any) => {
+    mutationFn: async (updates: { status?: string; priority?: string; assigneeId?: string | null; dueDate?: string; sprintId?: string | null }) => {
       const res = await fetch("/api/tasks/bulk", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -81,7 +81,7 @@ export function BulkEditModal({ taskIds, boardId, onClose }: BulkEditModalProps)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const updates: any = {};
+    const updates: { status?: string; priority?: string; assigneeId?: string | null; dueDate?: string; sprintId?: string | null } = {};
     
     if (status) updates.status = status;
     if (priority) updates.priority = priority;
@@ -170,7 +170,7 @@ export function BulkEditModal({ taskIds, boardId, onClose }: BulkEditModalProps)
             >
               <option value="">No change</option>
               <option value="__unassign__">Unassign</option>
-              {members.map((bm: any) => (
+              {members.map((bm: { memberId: string; member?: { user?: { name?: string | null; email?: string | null } } }) => (
                 <option key={bm.memberId} value={bm.memberId}>
                   {bm.member?.user?.name || bm.member?.user?.email}
                 </option>
@@ -202,7 +202,7 @@ export function BulkEditModal({ taskIds, boardId, onClose }: BulkEditModalProps)
               >
                 <option value="">No change</option>
                 <option value="__remove__">Remove from sprint</option>
-                {sprints.map((sprint: any) => (
+                {sprints.map((sprint: { id: string; name: string }) => (
                   <option key={sprint.id} value={sprint.id}>
                     {sprint.name}
                   </option>

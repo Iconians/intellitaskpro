@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma, IntegrationProvider } from "@prisma/client";
 import { requireMember } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { IntegrationProvider } from "@prisma/client";
-import { validateSlackConfig, sendSlackNotification } from "@/lib/integrations/slack";
-import { validateJiraConfig, createJiraIssue } from "@/lib/integrations/jira";
-import { validateLinearConfig, createLinearIssue } from "@/lib/integrations/linear";
-import { validateZapierConfig, sendZapierWebhook } from "@/lib/integrations/zapier";
+import { validateSlackConfig, sendSlackNotification, type SlackConfig } from "@/lib/integrations/slack";
+import { validateJiraConfig, createJiraIssue, type JiraConfig } from "@/lib/integrations/jira";
+import { validateLinearConfig, createLinearIssue, type LinearConfig } from "@/lib/integrations/linear";
+import { validateZapierConfig, sendZapierWebhook, type ZapierConfig } from "@/lib/integrations/zapier";
 
 export async function PATCH(
   request: NextRequest,
@@ -31,7 +31,7 @@ export async function PATCH(
 
     // Handle test/action requests
     if (action) {
-      const integrationConfig = (config || integration.config) as any;
+      const integrationConfig = (config ?? integration.config) as Record<string, unknown>;
 
       if (!integrationConfig || Object.keys(integrationConfig).length === 0) {
         return NextResponse.json(
@@ -44,28 +44,28 @@ export async function PATCH(
         switch (integration.provider) {
           case IntegrationProvider.SLACK:
             if (action === "test") {
-              const isValid = await validateSlackConfig(integrationConfig);
+              const isValid = await validateSlackConfig(integrationConfig as unknown as SlackConfig);
               if (!isValid) {
                 return NextResponse.json(
                   { error: "Invalid Slack configuration" },
                   { status: 400 }
                 );
               }
-              const success = await sendSlackNotification(integrationConfig, {
+              const success = await sendSlackNotification(integrationConfig as unknown as SlackConfig, {
                 text: "Test notification from Project Management",
                 title: "Integration Test",
               });
               return NextResponse.json({ success });
             }
             if (action === "send") {
-              const success = await sendSlackNotification(integrationConfig, payload);
+              const success = await sendSlackNotification(integrationConfig as unknown as SlackConfig, payload);
               return NextResponse.json({ success });
             }
             break;
 
           case IntegrationProvider.JIRA:
             if (action === "test") {
-              const isValid = await validateJiraConfig(integrationConfig);
+              const isValid = await validateJiraConfig(integrationConfig as unknown as JiraConfig);
               if (!isValid) {
                 return NextResponse.json(
                   { error: "Invalid Jira configuration" },
@@ -75,7 +75,7 @@ export async function PATCH(
               return NextResponse.json({ success: true });
             }
             if (action === "create_issue") {
-              const result = await createJiraIssue(integrationConfig, payload);
+              const result = await createJiraIssue(integrationConfig as unknown as JiraConfig, payload);
               if (!result) {
                 return NextResponse.json(
                   { error: "Failed to create Jira issue" },
@@ -88,7 +88,7 @@ export async function PATCH(
 
           case IntegrationProvider.LINEAR:
             if (action === "test") {
-              const isValid = await validateLinearConfig(integrationConfig);
+              const isValid = await validateLinearConfig(integrationConfig as unknown as LinearConfig);
               if (!isValid) {
                 return NextResponse.json(
                   { error: "Invalid Linear configuration" },
@@ -98,7 +98,7 @@ export async function PATCH(
               return NextResponse.json({ success: true });
             }
             if (action === "create_issue") {
-              const result = await createLinearIssue(integrationConfig, payload);
+              const result = await createLinearIssue(integrationConfig as unknown as LinearConfig, payload);
               if (!result) {
                 return NextResponse.json(
                   { error: "Failed to create Linear issue" },
@@ -111,21 +111,21 @@ export async function PATCH(
 
           case IntegrationProvider.ZAPIER:
             if (action === "test") {
-              const isValid = await validateZapierConfig(integrationConfig);
+              const isValid = await validateZapierConfig(integrationConfig as unknown as ZapierConfig);
               if (!isValid) {
                 return NextResponse.json(
                   { error: "Invalid Zapier configuration" },
                   { status: 400 }
                 );
               }
-              const success = await sendZapierWebhook(integrationConfig, {
+              const success = await sendZapierWebhook(integrationConfig as unknown as ZapierConfig, {
                 event: "test",
                 data: { test: true },
               });
               return NextResponse.json({ success });
             }
             if (action === "webhook") {
-              const success = await sendZapierWebhook(integrationConfig, payload);
+              const success = await sendZapierWebhook(integrationConfig as unknown as ZapierConfig, payload);
               return NextResponse.json({ success });
             }
             break;
@@ -150,7 +150,7 @@ export async function PATCH(
 
     // Handle regular update
     try {
-      const updateData: any = {};
+      const updateData: Prisma.IntegrationUpdateInput = {};
       if (config !== undefined) updateData.config = config;
       if (isActive !== undefined) updateData.isActive = isActive;
 

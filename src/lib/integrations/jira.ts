@@ -80,7 +80,7 @@ export async function validateJiraConfig(config: JiraConfig): Promise<boolean> {
     });
 
     return response.ok;
-  } catch (error) {
+  } catch (_error) {
     return false;
   }
 }

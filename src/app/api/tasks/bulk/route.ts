@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma, TaskStatus, TaskPriority } from "@prisma/client";
 import { requireBoardAccess } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { triggerPusherEvent } from "@/lib/pusher";
-import { TaskStatus, TaskPriority } from "@prisma/client";
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -49,7 +49,7 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const updateData: any = {};
+    const updateData: Prisma.TaskUncheckedUpdateInput = {};
 
     if (updates.status) {
       const validStatuses = Object.values(TaskStatus);
@@ -92,7 +92,7 @@ export async function PATCH(request: NextRequest) {
     });
 
     // Trigger real-time updates
-    await triggerPusherEvent(`board-${firstTask.boardId}`, "tasks-bulk-updated", {
+    await triggerPusherEvent(`private-board-${firstTask.boardId}`, "tasks-bulk-updated", {
       taskIds,
       updates: updateData,
     });
@@ -152,7 +152,7 @@ export async function DELETE(request: NextRequest) {
     });
 
     // Trigger real-time updates
-    await triggerPusherEvent(`board-${firstTask.boardId}`, "tasks-bulk-deleted", {
+    await triggerPusherEvent(`private-board-${firstTask.boardId}`, "tasks-bulk-deleted", {
       taskIds,
     });
 

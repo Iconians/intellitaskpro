@@ -12,7 +12,8 @@ interface BurndownChartProps {
 
 export function BurndownChart({ data }: BurndownChartProps) {
   // Group tasks by date
-  const tasksByDate = data.tasksOverTime.reduce((acc: any, task) => {
+  type DayAgg = { total: number; completed: number };
+  const tasksByDate = data.tasksOverTime.reduce((acc: Record<string, DayAgg>, task) => {
     const date = new Date(task.date).toLocaleDateString();
     if (!acc[date]) {
       acc[date] = { total: 0, completed: 0 };
@@ -22,11 +23,11 @@ export function BurndownChart({ data }: BurndownChartProps) {
       acc[date].completed++;
     }
     return acc;
-  }, {});
+  }, {} as Record<string, DayAgg>);
 
   const dates = Object.keys(tasksByDate).sort();
   const maxTasks = Math.max(
-    ...Object.values(tasksByDate).map((d: any) => d.total)
+    ...Object.values(tasksByDate).map((d: DayAgg) => d.total)
   );
 
   return (

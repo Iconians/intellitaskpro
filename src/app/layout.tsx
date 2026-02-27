@@ -5,6 +5,7 @@ import { SessionProvider } from "@/components/providers/SessionProvider";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { ReactQueryProvider } from "@/lib/react-query";
 import { Navbar } from "@/components/navigation/Navbar";
+import { AxeReporter } from "@/components/a11y/AxeReporter";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,6 +35,7 @@ export default function RootLayout({
         <ThemeProvider>
           <SessionProvider>
             <ReactQueryProvider>
+              <AxeReporter />
               <Navbar />
               {children}
             </ReactQueryProvider>

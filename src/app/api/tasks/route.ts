@@ -249,7 +249,7 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      await triggerPusherEvent(`board-${boardId}`, "task-created", {
+      await triggerPusherEvent(`private-board-${boardId}`, "task-created", {
         taskId: task.id,
         boardId: task.boardId,
         status: task.status,

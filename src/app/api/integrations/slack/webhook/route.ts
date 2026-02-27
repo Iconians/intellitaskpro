@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import crypto from "crypto";
 
 /**
  * Webhook endpoint for Slack to send events to your app
  * This receives webhooks FROM Slack (e.g., slash commands, button clicks)
- * 
+ *
  * To configure in Slack:
- * 1. Go to your Slack app settings
- * 2. Navigate to "Interactivity & Shortcuts" or "Slash Commands"
+ * 1. Go to your Slack app settings → Basic Information → Signing Secret (copy it)
+ * 2. Add signingSecret to your Slack integration config so we can verify requests
  * 3. Set the Request URL to: https://yourapp.com/api/integrations/slack/webhook?organizationId=YOUR_ORG_ID
  */
 export async function POST(request: NextRequest) {
@@ -39,6 +40,52 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.text();
+    const config = integration.config as { webhookUrl?: string; signingSecret?: string };
+    const signingSecret = config?.signingSecret;
+
+    if (signingSecret) {
+      const signature = request.headers.get("x-slack-signature");
+      const timestamp = request.headers.get("x-slack-request-timestamp");
+      if (!signature || !timestamp) {
+        return NextResponse.json(
+          { error: "Missing Slack signature or timestamp" },
+          { status: 401 }
+        );
+      }
+      const ts = parseInt(timestamp, 10);
+      if (Math.abs(Date.now() / 1000 - ts) > 60 * 5) {
+        return NextResponse.json(
+          { error: "Request timestamp too old" },
+          { status: 401 }
+        );
+      }
+      const baseString = `v0:${timestamp}:${body}`;
+      const expected =
+        "v0=" +
+        crypto
+          .createHmac("sha256", signingSecret)
+          .update(baseString)
+          .digest("hex");
+      try {
+        if (
+          !crypto.timingSafeEqual(
+            Buffer.from(signature, "utf8"),
+            Buffer.from(expected, "utf8")
+          )
+        ) {
+          return NextResponse.json(
+            { error: "Invalid Slack signature" },
+            { status: 401 }
+          );
+        }
+      } catch {
+        return NextResponse.json(
+          { error: "Invalid Slack signature" },
+          { status: 401 }
+        );
+      }
+    }
+
     const payload = JSON.parse(body);
 
     // Handle different Slack webhook types

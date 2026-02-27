@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "./prisma";
 
 export type AuditAction = "CREATE" | "UPDATE" | "DELETE" | "VIEW" | "EXPORT";
@@ -19,8 +20,8 @@ export interface AuditLogData {
   entityType: AuditEntityType;
   entityId: string;
   changes?: {
-    before?: any;
-    after?: any;
+    before?: unknown;
+    after?: unknown;
   };
   ipAddress?: string;
   userAgent?: string;
@@ -37,7 +38,7 @@ export async function logAuditEvent(data: AuditLogData) {
         action: data.action,
         entityType: data.entityType,
         entityId: data.entityId,
-        changes: data.changes ? (data.changes as any) : null,
+        changes: data.changes ? (data.changes as Prisma.InputJsonValue) : undefined,
         ipAddress: data.ipAddress || null,
         userAgent: data.userAgent || null,
       },

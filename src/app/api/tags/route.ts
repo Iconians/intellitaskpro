@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (boardId) {
-      await triggerPusherEvent(`board-${boardId}`, "tag-created", tag);
+      await triggerPusherEvent(`private-board-${boardId}`, "tag-created", tag);
     }
 
     return NextResponse.json(tag);

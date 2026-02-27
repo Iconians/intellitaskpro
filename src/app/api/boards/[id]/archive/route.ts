@@ -28,7 +28,7 @@ export async function POST(
       },
     });
 
-    await triggerPusherEvent(`board-${id}`, "board-archived", updatedBoard);
+    await triggerPusherEvent(`private-board-${id}`, "board-archived", updatedBoard);
 
     return NextResponse.json(updatedBoard);
   } catch (error) {
@@ -63,7 +63,7 @@ export async function DELETE(
       },
     });
 
-    await triggerPusherEvent(`board-${id}`, "board-restored", updatedBoard);
+    await triggerPusherEvent(`private-board-${id}`, "board-restored", updatedBoard);
 
     return NextResponse.json(updatedBoard);
   } catch (error) {

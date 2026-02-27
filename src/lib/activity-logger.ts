@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "./prisma";
 import { triggerPusherEvent } from "./pusher";
 
@@ -19,7 +20,7 @@ export type ActivityType =
   | "SPRINT_ENDED";
 
 export interface ActivityMetadata {
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export async function logActivity(
@@ -40,14 +41,14 @@ export async function logActivity(
         organizationId: options.organizationId || null,
         boardId: options.boardId || null,
         taskId: options.taskId || null,
-        metadata: options.metadata ? (options.metadata as any) : null,
+        metadata: options.metadata ? (options.metadata as Prisma.InputJsonValue) : undefined,
       },
     });
 
     // Trigger real-time update
     if (options.boardId) {
       await triggerPusherEvent(
-        `board-${options.boardId}`,
+        `private-board-${options.boardId}`,
         "activity-created",
         activity
       );

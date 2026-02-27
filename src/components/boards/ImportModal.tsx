@@ -27,9 +27,9 @@ export function ImportModal({ boardId, onClose }: ImportModalProps) {
       if (!res.ok) {
         const errorData = await res.json();
         // Create a custom error object that includes the full error response
-        const error = new Error(errorData.message || errorData.error || "Failed to import") as any;
-        error.response = { data: errorData };
-        throw error;
+        const err = new Error(errorData.message || errorData.error || "Failed to import") as Error & { response?: { data: unknown } };
+        err.response = { data: errorData };
+        throw err;
       }
       return res.json();
     },
@@ -44,7 +44,7 @@ export function ImportModal({ boardId, onClose }: ImportModalProps) {
       }
       onClose();
     },
-    onError: (error: any) => {
+    onError: (error: Error & { response?: { data: unknown } }) => {
       // Extract error message from API response
       let errorMessage = "Failed to import";
       let errorDetails: string[] = [];
@@ -52,7 +52,7 @@ export function ImportModal({ boardId, onClose }: ImportModalProps) {
       try {
         // If error has a response with JSON data
         if (error?.response?.data) {
-          const errorData = error.response.data;
+          const errorData = error.response.data as { message?: string; error?: string; details?: string[] };
           if (errorData.message) {
             errorMessage = errorData.message;
           } else if (errorData.error) {
@@ -64,7 +64,7 @@ export function ImportModal({ boardId, onClose }: ImportModalProps) {
         } else if (error?.message) {
           errorMessage = error.message;
         }
-      } catch (e) {
+      } catch (_e) {
         // Use original error message if parsing fails
         errorMessage = error?.message || "Unknown error occurred";
       }
@@ -104,7 +104,7 @@ export function ImportModal({ boardId, onClose }: ImportModalProps) {
             format,
             content: jsonData,
           });
-        } catch (error) {
+        } catch (_error) {
           alert("Invalid JSON file. Please check the format.");
         }
       } else {

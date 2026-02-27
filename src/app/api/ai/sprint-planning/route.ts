@@ -73,26 +73,24 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const systemPrompt = `You are a versatile sprint planning assistant that works across all industries and business types. Analyze the backlog and suggest which tasks should be included in the sprint based on:
-- Task priority and business value
-- Estimated hours
-- Team capacity (${capacity} hours)
-- Task dependencies
-- Strategic alignment
-- Customer/stakeholder impact
+    const systemPrompt = `You are a sprint planning assistant for development teams. Analyze the backlog and suggest which tasks should be included in the sprint based on:
+- Task priority and technical value
+- Estimated hours and team capacity (${capacity} hours total)
+- Dependencies (don't leave blocking tasks out)
+- Coherent sprint goal (e.g. complete a feature, ship a fix)
 
-Consider the context of the business domain when planning. The sprint goal should reflect meaningful progress toward business objectives, whether technical, operational, marketing, sales, HR, or any other type of work.
+The sprint goal should be a clear development outcome (e.g. "Ship user auth and profile API", "Fix checkout bugs and deploy").
 
 Return a JSON object with:
-- goal: Sprint goal statement (domain-appropriate, not just technical)
+- goal: Sprint goal statement (development-focused)
 - taskIds: Array of task IDs to include in sprint
 - reasoning: Brief explanation of the selection
 
 Example:
 {
-  "goal": "Launch Q1 marketing campaign and establish customer feedback process",
+  "goal": "Complete auth flow and profile API for MVP",
   "taskIds": ["task1", "task2"],
-  "reasoning": "Selected high-priority tasks that fit within capacity and deliver measurable business value"
+  "reasoning": "Selected tasks that fit within capacity and deliver a shippable auth feature"
 }`;
 
     const tasksDescription = backlogTasks
@@ -114,7 +112,6 @@ Example:
         systemPrompt
       );
     } catch (error) {
-      
       console.error("AI generation failed, using rule-based selection:", error);
       const selectedTasks = backlogTasks
         .filter((t) => (t.estimatedHours || 0) <= capacity)
@@ -142,7 +139,7 @@ Example:
       } else {
         suggestion = JSON.parse(aiResponse);
       }
-    } catch (error) {
+    } catch (_error) {
       
       const selectedTasks = backlogTasks
         .filter((t) => (t.estimatedHours || 0) <= capacity)

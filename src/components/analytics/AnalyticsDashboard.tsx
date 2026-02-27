@@ -130,7 +130,7 @@ export function AnalyticsDashboard({
             Tasks by Status
           </h2>
           <div className="space-y-2">
-            {analytics.tasksByStatus.map((item: any) => (
+            {analytics.tasksByStatus.map((item: { status: string; count: number }) => (
               <div key={item.status} className="flex items-center justify-between">
                 <span className="text-sm text-gray-600 dark:text-gray-400">
                   {item.status}
@@ -147,7 +147,7 @@ export function AnalyticsDashboard({
             Tasks by Priority
           </h2>
           <div className="space-y-2">
-            {analytics.tasksByPriority.map((item: any) => (
+            {analytics.tasksByPriority.map((item: { priority: string; count: number }) => (
               <div key={item.priority} className="flex items-center justify-between">
                 <span className="text-sm text-gray-600 dark:text-gray-400">
                   {item.priority}

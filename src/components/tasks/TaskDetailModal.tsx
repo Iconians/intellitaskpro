@@ -205,10 +205,10 @@ export function TaskDetailModal({
           {/* Tabs */}
           <div className="border-b border-gray-200 dark:border-gray-700 px-2 xs:px-4 overflow-x-auto">
             <div className="flex gap-1 xs:gap-2 sm:gap-4 min-w-max">
-              {["details", "checklist", "dependencies", "time", "approvals"].map((tab) => (
+              {(["details", "checklist", "dependencies", "time", "approvals"] as const).map((tab) => (
                 <button
                   key={tab}
-                  onClick={() => setActiveTab(tab as any)}
+                  onClick={() => setActiveTab(tab)}
                   className={`px-2 xs:px-3 sm:px-4 py-1.5 xs:py-2 text-xs xs:text-sm font-medium border-b-2 whitespace-nowrap flex-shrink-0 ${
                     activeTab === tab
                       ? "border-blue-600 text-blue-600 dark:text-blue-400"

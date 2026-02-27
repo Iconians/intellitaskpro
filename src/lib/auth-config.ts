@@ -7,7 +7,7 @@ import { logSecurityEvent } from "@/lib/security-logger";
 
 
 
-let loginAttempts = new Map<string, { count: number; resetTime: number }>();
+const loginAttempts = new Map<string, { count: number; resetTime: number }>();
 
 
 setInterval(() => {
@@ -178,5 +178,6 @@ export const authOptions: NextAuthOptions = {
       },
     },
   },
-  debug: process.env.NODE_ENV === "development",
+  // Only enable when explicitly needed; avoids DEBUG_ENABLED warning and prevents leaking auth details.
+  debug: process.env.NEXTAUTH_DEBUG === "true" || process.env.NEXTAUTH_DEBUG === "1",
 };

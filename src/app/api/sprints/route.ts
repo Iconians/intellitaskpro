@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
 
     
     try {
-      await pusherServer.trigger(`board-${boardId}`, "sprint-created", {
+      await pusherServer.trigger(`private-board-${boardId}`, "sprint-created", {
         sprint,
       });
     } catch (pusherError) {

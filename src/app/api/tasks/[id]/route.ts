@@ -247,12 +247,12 @@ export async function PATCH(
 
     
     try {
-      await triggerPusherEvent(`board-${task.boardId}`, "task-updated", {
+      await triggerPusherEvent(`private-board-${task.boardId}`, "task-updated", {
         taskId: updatedTask.id,
         boardId: updatedTask.boardId,
         status: updatedTask.status,
       });
-    } catch (pusherError) {
+    } catch (_pusherError) {
       
       
     }
@@ -398,10 +398,10 @@ export async function DELETE(
 
     
     try {
-      await triggerPusherEvent(`board-${task.boardId}`, "task-deleted", {
+      await triggerPusherEvent(`private-board-${task.boardId}`, "task-deleted", {
         taskId: id,
       });
-    } catch (pusherError) {
+    } catch (_pusherError) {
       
       
     }

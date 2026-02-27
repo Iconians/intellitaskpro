@@ -59,43 +59,39 @@ export async function POST(request: NextRequest) {
     
     await requireBoardAccess(boardId, "MEMBER");
 
-    const systemPrompt = `You are a versatile project management assistant that works across all industries and business types. Given any project description, initiative, or goal, break it down into actionable tasks.
+    const systemPrompt = `You are a development project management assistant. Given a feature, sprint goal, or development initiative, break it down into actionable engineering tasks.
 
-Your task breakdowns should work for ANY domain:
-- Business operations (marketing, sales, HR, finance)
-- Product development (physical products, services, digital products)
-- Events and campaigns
-- Process improvements
-- Strategic initiatives
-- Content creation
-- Customer service improvements
-- And any other business activity
+Focus on software development work:
+- Features, user stories, and technical specs
+- Backend APIs, frontend components, and integrations
+- Testing, code review, and deployment
+- Bug fixes, refactors, and tech debt
 
 Return a JSON array of tasks, each with:
-- title: A clear, concise task title (use domain-appropriate language)
+- title: Clear, concise task title (development-focused)
 - description: Detailed description of what needs to be done
 - priority: One of LOW, MEDIUM, HIGH, URGENT
 - estimatedHours: Estimated hours to complete (number)
 
-Example formats (showing diversity):
+Example:
 [
   {
-    "title": "Research target market demographics",
-    "description": "Conduct market research to identify primary customer segments, their needs, and purchasing behaviors",
+    "title": "Add user authentication endpoint",
+    "description": "Implement POST /auth/login and /auth/register with JWT; add password hashing and validation",
     "priority": "HIGH",
     "estimatedHours": 8
   },
   {
-    "title": "Design product packaging",
-    "description": "Create packaging design that aligns with brand identity and protects product during shipping",
+    "title": "Write integration tests for auth",
+    "description": "Cover login, register, token refresh, and error cases",
     "priority": "MEDIUM",
-    "estimatedHours": 6
+    "estimatedHours": 4
   },
   {
-    "title": "Schedule vendor meetings",
-    "description": "Coordinate with 3 potential suppliers to discuss pricing, delivery terms, and quality standards",
-    "priority": "HIGH",
-    "estimatedHours": 4
+    "title": "Update API documentation",
+    "description": "Document new auth endpoints in OpenAPI spec",
+    "priority": "LOW",
+    "estimatedHours": 2
   }
 ]`;
 
@@ -113,7 +109,7 @@ Example formats (showing diversity):
       console.error("AI generation failed, falling back to demo mode:", error);
       try {
         aiResponse = await generateWithAI("demo", userPrompt, systemPrompt);
-      } catch (fallbackError) {
+      } catch (_fallbackError) {
         return NextResponse.json(
           {
             error:
@@ -133,7 +129,7 @@ Example formats (showing diversity):
       } else {
         tasks = JSON.parse(aiResponse);
       }
-    } catch (error) {
+    } catch (_error) {
       return NextResponse.json(
         { error: "Failed to parse AI response. Please try again." },
         { status: 500 }
@@ -223,7 +219,7 @@ Example formats (showing diversity):
 
     
     try {
-      await pusherServer.trigger(`board-${boardId}`, "tasks-generated", {
+      await pusherServer.trigger(`private-board-${boardId}`, "tasks-generated", {
         tasks: createdTasks,
         count: createdTasks.length,
       });

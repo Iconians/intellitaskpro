@@ -218,7 +218,7 @@ export function KanbanBoard({ boardId, organizationId, userBoardRole, filters = 
   });
 
   useRealtime({
-    channelName: `board-${boardId}`,
+    channelName: `private-board-${boardId}`,
     eventName: "task-updated",
     callback: () => {
       queryClient.invalidateQueries({ queryKey: ["board", boardId] });
@@ -226,7 +226,7 @@ export function KanbanBoard({ boardId, organizationId, userBoardRole, filters = 
   });
 
   useRealtime({
-    channelName: `board-${boardId}`,
+    channelName: `private-board-${boardId}`,
     eventName: "task-created",
     callback: () => {
       queryClient.invalidateQueries({ queryKey: ["board", boardId] });
@@ -234,7 +234,7 @@ export function KanbanBoard({ boardId, organizationId, userBoardRole, filters = 
   });
 
   useRealtime({
-    channelName: `board-${boardId}`,
+    channelName: `private-board-${boardId}`,
     eventName: "task-deleted",
     callback: () => {
       queryClient.invalidateQueries({ queryKey: ["board", boardId] });
@@ -242,7 +242,7 @@ export function KanbanBoard({ boardId, organizationId, userBoardRole, filters = 
   });
 
   useRealtime({
-    channelName: `board-${boardId}`,
+    channelName: `private-board-${boardId}`,
     eventName: "tasks-generated",
     callback: () => {
       queryClient.invalidateQueries({ queryKey: ["board", boardId] });

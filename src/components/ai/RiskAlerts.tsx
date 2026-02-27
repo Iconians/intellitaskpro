@@ -16,6 +16,7 @@ interface Risk {
 
 export function RiskAlerts({ boardId }: RiskAlertsProps) {
   const [dismissedRisks, setDismissedRisks] = useState<Set<string>>(new Set());
+  const [optedIn, setOptedIn] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["ai-risks", boardId],
@@ -29,17 +30,40 @@ export function RiskAlerts({ boardId }: RiskAlertsProps) {
       return res.json() as Promise<{ risks: Risk[] }>;
     },
     refetchInterval: 300000, // Refetch every 5 minutes
+    enabled: optedIn, // Only call API when user clicks "Show AI risk analysis"
   });
 
+  if (!optedIn) {
+    return (
+      <div className="mb-4">
+        <button
+          type="button"
+          onClick={() => setOptedIn(true)}
+          className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 underline"
+        >
+          Show AI risk analysis
+        </button>
+      </div>
+    );
+  }
+
   if (isLoading) {
-    return null;
+    return (
+      <div className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+        Analyzing risks…
+      </div>
+    );
   }
 
   const risks = data?.risks || [];
   const visibleRisks = risks.filter((r) => !dismissedRisks.has(r.type));
 
   if (visibleRisks.length === 0) {
-    return null;
+    return (
+      <div className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+        No AI risk alerts for this board.
+      </div>
+    );
   }
 
   const getSeverityColor = (severity: string) => {

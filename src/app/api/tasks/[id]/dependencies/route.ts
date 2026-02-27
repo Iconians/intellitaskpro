@@ -140,7 +140,7 @@ export async function POST(
       },
     });
 
-    await triggerPusherEvent(`board-${task.boardId}`, "task-dependency-created", {
+    await triggerPusherEvent(`private-board-${task.boardId}`, "task-dependency-created", {
       taskId: id,
       dependency,
     });
@@ -189,7 +189,7 @@ export async function DELETE(
       },
     });
 
-    await triggerPusherEvent(`board-${task.boardId}`, "task-dependency-deleted", {
+    await triggerPusherEvent(`private-board-${task.boardId}`, "task-dependency-deleted", {
       taskId: id,
       dependsOnId,
     });

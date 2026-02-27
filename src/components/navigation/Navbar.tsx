@@ -100,8 +100,17 @@ export function Navbar() {
                 {showMenu && (
                   <>
                     <div
+                      role="button"
+                      tabIndex={0}
+                      aria-label="Close menu"
                       className="fixed inset-0 z-10"
                       onClick={() => setShowMenu(false)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          setShowMenu(false);
+                        }
+                      }}
                     />
                     <div className="absolute right-0 mt-2 w-48 xs:w-56 bg-white dark:bg-gray-800 rounded-lg shadow-xl py-1 z-20 border border-gray-200 dark:border-gray-700 backdrop-blur-sm max-w-[calc(100vw-2rem)]">
                       <div className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700">

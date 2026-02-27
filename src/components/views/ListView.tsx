@@ -20,8 +20,43 @@ interface ListViewProps {
   filters?: FilterState;
 }
 
-type SortField = "title" | "status" | "priority" | "dueDate" | "createdAt";
-type SortDirection = "asc" | "desc";
+export type SortField = "title" | "status" | "priority" | "dueDate" | "createdAt";
+export type SortDirection = "asc" | "desc";
+
+interface BoardTaskTag {
+  tag?: {
+    id: string;
+  } | null;
+}
+
+interface BoardTask {
+  id: string;
+  title?: string | null;
+  description?: string | null;
+  status?: string | null;
+  priority?: string | null;
+  dueDate?: string | null;
+  createdAt?: string | null;
+  assignee?: {
+    id?: string;
+    user?: {
+      name?: string | null;
+      email?: string | null;
+    } | null;
+  } | null;
+  tags?: BoardTaskTag[] | null;
+}
+
+interface SortIconProps {
+  field: SortField;
+  currentField: SortField;
+  direction: SortDirection;
+}
+
+function SortIcon({ field, currentField, direction }: SortIconProps) {
+  if (currentField !== field) return null;
+  return direction === "asc" ? "↑" : "↓";
+}
 
 export function ListView({
   boardId,
@@ -49,7 +84,7 @@ export function ListView({
     return <div className="p-4">Board not found</div>;
   }
 
-  let tasks = [...(board.tasks || [])];
+  let tasks: BoardTask[] = [...(board.tasks || [])];
 
   // Apply filters
   if (filters.status) {
@@ -62,8 +97,8 @@ export function ListView({
     tasks = tasks.filter((task) => task.assignee?.id === filters.assigneeId);
   }
   if (filters.tagId && tasks[0]?.tags) {
-    tasks = tasks.filter((task: any) => 
-      task.tags?.some((tt: any) => tt.tag?.id === filters.tagId)
+    tasks = tasks.filter((task) =>
+      task.tags?.some((tt) => tt.tag?.id === filters.tagId)
     );
   }
   if (filters.dueDateFrom) {
@@ -92,16 +127,16 @@ export function ListView({
 
   // Sort tasks
   tasks.sort((a, b) => {
-    let aValue: any = a[sortField];
-    let bValue: any = b[sortField];
+    const getComparableValue = (task: BoardTask): number | string => {
+      const raw = task[sortField];
+      if (sortField === "dueDate" || sortField === "createdAt") {
+        return raw ? new Date(raw as string).getTime() : 0;
+      }
+      return (raw as string) || "";
+    };
 
-    if (sortField === "dueDate" || sortField === "createdAt") {
-      aValue = aValue ? new Date(aValue).getTime() : 0;
-      bValue = bValue ? new Date(bValue).getTime() : 0;
-    } else {
-      aValue = aValue || "";
-      bValue = bValue || "";
-    }
+    const aValue = getComparableValue(a);
+    const bValue = getComparableValue(b);
 
     if (sortDirection === "asc") {
       return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
@@ -119,11 +154,6 @@ export function ListView({
     }
   };
 
-  const SortIcon = ({ field }: { field: SortField }) => {
-    if (sortField !== field) return null;
-    return sortDirection === "asc" ? "↑" : "↓";
-  };
-
   return (
     <div className="h-full flex flex-col">
 
@@ -136,25 +166,45 @@ export function ListView({
                 className="px-2 xs:px-3 sm:px-4 py-2 xs:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
                 onClick={() => handleSort("title")}
               >
-                Title <SortIcon field="title" />
+                Title{" "}
+                <SortIcon
+                  field="title"
+                  currentField={sortField}
+                  direction={sortDirection}
+                />
               </th>
               <th
                 className="px-2 xs:px-3 sm:px-4 py-2 xs:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
                 onClick={() => handleSort("status")}
               >
-                Status <SortIcon field="status" />
+                Status{" "}
+                <SortIcon
+                  field="status"
+                  currentField={sortField}
+                  direction={sortDirection}
+                />
               </th>
               <th
                 className="px-2 xs:px-3 sm:px-4 py-2 xs:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
                 onClick={() => handleSort("priority")}
               >
-                Priority <SortIcon field="priority" />
+                Priority{" "}
+                <SortIcon
+                  field="priority"
+                  currentField={sortField}
+                  direction={sortDirection}
+                />
               </th>
               <th
                 className="px-2 xs:px-3 sm:px-4 py-2 xs:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
                 onClick={() => handleSort("dueDate")}
               >
-                Due Date <SortIcon field="dueDate" />
+                Due Date{" "}
+                <SortIcon
+                  field="dueDate"
+                  currentField={sortField}
+                  direction={sortDirection}
+                />
               </th>
               <th className="px-2 xs:px-3 sm:px-4 py-2 xs:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Assignee

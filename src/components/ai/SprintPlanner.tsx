@@ -249,7 +249,7 @@ export function SprintPlanner({
               </p>
               {suggestion.taskIds.length === 0 ? (
                 <p className="text-sm text-gray-500 dark:text-gray-400 italic">
-                  No tasks selected. The backlog might be empty or tasks don't
+                  No tasks selected. The backlog might be empty or tasks don&apos;t
                   fit the capacity.
                 </p>
               ) : (

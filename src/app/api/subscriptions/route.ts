@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
 
           try {
             await pusherServer.trigger(
-              `organization-${organizationId}`,
+              `private-organization-${organizationId}`,
               "subscription-updated",
               {
                 subscriptionId: existingSubscription.id,
@@ -533,7 +533,7 @@ export async function PATCH(request: NextRequest) {
 
                   try {
                     await pusherServer.trigger(
-                      `organization-${organizationId}`,
+                      `private-organization-${organizationId}`,
                       "subscription-updated",
                       {
                         subscriptionId: updatedSubscription.id,
@@ -621,7 +621,7 @@ export async function PATCH(request: NextRequest) {
 
         try {
           await pusherServer.trigger(
-            `organization-${organizationId}`,
+            `private-organization-${organizationId}`,
             "subscription-updated",
             {
               subscriptionId: updatedSubscription.id,

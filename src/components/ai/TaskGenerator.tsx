@@ -66,9 +66,8 @@ export function TaskGenerator({ boardId, onClose }: TaskGeneratorProps) {
         </div>
 
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-          Describe any project, initiative, or goal from any business area, and AI will break it down into
-          actionable tasks with priorities and time estimates. Works for marketing campaigns, product launches, 
-          process improvements, events, content creation, and more.
+          Describe a feature, sprint goal, or development initiative and AI will break it down into
+          actionable tasks with priorities and time estimates. Best for planning features, APIs, refactors, and sprint work.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -86,7 +85,7 @@ export function TaskGenerator({ boardId, onClose }: TaskGeneratorProps) {
               onChange={(e) => setDescription(e.target.value)}
               rows={8}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Examples: Launch a new product line, organize a company event, improve customer onboarding process, create a marketing campaign, implement a new HR policy, design a training program..."
+              placeholder="Examples: Add user authentication and profile API, implement checkout flow and payment integration, refactor legacy auth module, fix dashboard performance issues, ship settings page and email preferences..."
             />
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               Be as detailed as possible for better task breakdown

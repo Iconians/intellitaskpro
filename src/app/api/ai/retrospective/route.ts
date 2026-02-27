@@ -53,11 +53,11 @@ export async function POST(request: NextRequest) {
     const completedTasks = sprint.tasks.filter((t) => t.status === "DONE");
     const incompleteTasks = sprint.tasks.filter((t) => t.status !== "DONE");
 
-    const systemPrompt = `You are a project management assistant. Generate a sprint retrospective based on sprint data. Include:
-1. What went well
+    const systemPrompt = `You are a development team facilitator. Generate a sprint retrospective based on sprint data. Include:
+1. What went well (delivery, tech, process)
 2. What could be improved
 3. Action items for next sprint
-4. Team velocity insights
+4. Team velocity and delivery insights
 
 Return a JSON object with these sections.`;
 
@@ -101,7 +101,7 @@ Total Tasks: ${sprint.tasks.length}
           actionItems: [],
         };
       }
-    } catch (error) {
+    } catch (_error) {
       // Fallback to plain text
       retrospective = {
         summary: aiResponse,

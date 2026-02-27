@@ -98,7 +98,7 @@ export async function POST(
       },
     });
 
-    await triggerPusherEvent(`board-${task.boardId}`, "task-watcher-added", {
+    await triggerPusherEvent(`private-board-${task.boardId}`, "task-watcher-added", {
       taskId: id,
       watcher,
     });
@@ -143,7 +143,7 @@ export async function DELETE(
       },
     });
 
-    await triggerPusherEvent(`board-${task.boardId}`, "task-watcher-removed", {
+    await triggerPusherEvent(`private-board-${task.boardId}`, "task-watcher-removed", {
       taskId: id,
       userId: user.id,
     });
