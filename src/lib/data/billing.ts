@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUsage, getActualCounts } from "@/lib/usage";
+import { isDeveloperOrganization } from "@/lib/developer";
 
 export type PlanForBilling = {
   id: string;
@@ -75,6 +76,24 @@ export async function getPlans(): Promise<PlanForBilling[]> {
 export async function getSubscriptionForOrg(
   organizationId: string
 ): Promise<SubscriptionForBilling | null> {
+  if (isDeveloperOrganization(organizationId)) {
+    const enterprisePlan = await prisma.plan.findFirst({
+      where: { name: "Enterprise" },
+    });
+    if (enterprisePlan) {
+      return {
+        id: `developer-${organizationId}`,
+        organizationId,
+        planId: enterprisePlan.id,
+        status: "ACTIVE",
+        currentPeriodStart: null,
+        currentPeriodEnd: null,
+        stripeSubscriptionId: null,
+        plan: serializePlan(enterprisePlan),
+      };
+    }
+  }
+
   const subscription = await prisma.subscription.findUnique({
     where: { organizationId },
     include: { plan: true },

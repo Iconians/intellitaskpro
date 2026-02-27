@@ -35,6 +35,7 @@ const envConfig: EnvConfig = {
     "OLLAMA_URL",
     "REDIS_URL",
     "CRON_SECRET",
+    "DEVELOPER_ORGANIZATION_IDS",
   ],
   productionOnly: [
     "STRIPE_SECRET_KEY",

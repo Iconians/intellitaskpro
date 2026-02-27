@@ -2,6 +2,7 @@ import { prisma } from "./prisma";
 import { authOptions } from "./auth-config";
 import { getServerSession } from "next-auth";
 import type { BoardMember, Member, User } from "@prisma/client";
+import { isDeveloperOrganization } from "./developer";
 
 
 type BoardMemberWithIncludes = BoardMember & {
@@ -188,6 +189,21 @@ export async function requireBoardAccess(
 }
 
 export async function requirePaidSubscription(organizationId: string) {
+  if (isDeveloperOrganization(organizationId)) {
+    const enterprisePlan = await prisma.plan.findFirst({
+      where: { name: "Enterprise" },
+    });
+    if (enterprisePlan) {
+      return {
+        id: "developer",
+        organizationId,
+        planId: enterprisePlan.id,
+        plan: enterprisePlan,
+        status: "ACTIVE",
+      } as Awaited<ReturnType<typeof requirePaidSubscription>>;
+    }
+  }
+
   const subscription = await prisma.subscription.findUnique({
     where: { organizationId },
     include: {
