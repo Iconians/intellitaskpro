@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma, TaskPriority, RecurrencePattern } from "@prisma/client";
 import { requireBoardAccess } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { TaskPriority, RecurrencePattern } from "@prisma/client";
 
 export async function GET(
   _request: NextRequest,
@@ -71,7 +71,7 @@ export async function PATCH(
 
     await requireBoardAccess(recurringTask.boardId, "MEMBER");
 
-    const updateData: any = {};
+    const updateData: Prisma.RecurringTaskUncheckedUpdateInput = {};
 
     if (body.title !== undefined) updateData.title = body.title;
     if (body.description !== undefined) updateData.description = body.description || null;

@@ -1,9 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { IntegrationProvider } from "@prisma/client";
-import { sendSlackNotification } from "@/lib/integrations/slack";
-import { createJiraIssue } from "@/lib/integrations/jira";
-import { createLinearIssue } from "@/lib/integrations/linear";
-import { sendZapierWebhook } from "@/lib/integrations/zapier";
+import { sendSlackNotification, type SlackConfig } from "@/lib/integrations/slack";
+import { createJiraIssue, type JiraConfig } from "@/lib/integrations/jira";
+import { createLinearIssue, type LinearConfig } from "@/lib/integrations/linear";
+import { sendZapierWebhook, type ZapierConfig } from "@/lib/integrations/zapier";
 import type { Task } from "@prisma/client";
 
 interface IntegrationEvent {
@@ -50,7 +50,14 @@ export async function triggerIntegrations(event: IntegrationEvent) {
     Promise.all(
       integrations.map(async (integration) => {
         try {
-          await triggerIntegration(integration, event);
+          await triggerIntegration(
+            {
+              id: integration.id,
+              provider: integration.provider,
+              config: (integration.config ?? {}) as Record<string, unknown>,
+            },
+            event
+          );
         } catch (error) {
           // Log error but don't fail other integrations
           console.error(
@@ -74,7 +81,7 @@ async function triggerIntegration(
   integration: {
     id: string;
     provider: IntegrationProvider;
-    config: any;
+    config: Record<string, unknown>;
   },
   event: IntegrationEvent
 ) {
@@ -105,7 +112,7 @@ async function triggerIntegration(
 /**
  * Trigger Slack notification
  */
-async function triggerSlackIntegration(config: any, event: IntegrationEvent) {
+async function triggerSlackIntegration(config: Record<string, unknown>, event: IntegrationEvent) {
   // Only send notifications for certain events
   const shouldNotify =
     event.type === "task_created" ||
@@ -148,7 +155,7 @@ async function triggerSlackIntegration(config: any, event: IntegrationEvent) {
       break;
   }
 
-  await sendSlackNotification(config, {
+  await sendSlackNotification(config as unknown as SlackConfig, {
     text,
     title,
     link: taskUrl,
@@ -159,7 +166,7 @@ async function triggerSlackIntegration(config: any, event: IntegrationEvent) {
 /**
  * Trigger Jira issue creation (only on task creation)
  */
-async function triggerJiraIntegration(config: any, event: IntegrationEvent) {
+async function triggerJiraIntegration(config: Record<string, unknown>, event: IntegrationEvent) {
   // Only create Jira issues when tasks are created
   if (event.type !== "task_created") return;
 
@@ -173,7 +180,7 @@ async function triggerJiraIntegration(config: any, event: IntegrationEvent) {
     URGENT: "Highest",
   };
 
-  const result = await createJiraIssue(config, {
+  const result = await createJiraIssue(config as unknown as JiraConfig, {
     summary: task.title,
     description: task.description || "",
     issueType: "Task",
@@ -189,7 +196,7 @@ async function triggerJiraIntegration(config: any, event: IntegrationEvent) {
 /**
  * Trigger Linear issue creation (only on task creation)
  */
-async function triggerLinearIntegration(config: any, event: IntegrationEvent) {
+async function triggerLinearIntegration(config: Record<string, unknown>, event: IntegrationEvent) {
   // Only create Linear issues when tasks are created
   if (event.type !== "task_created") return;
 
@@ -203,7 +210,7 @@ async function triggerLinearIntegration(config: any, event: IntegrationEvent) {
     URGENT: 4,
   };
 
-  const result = await createLinearIssue(config, {
+  const result = await createLinearIssue(config as unknown as LinearConfig, {
     title: task.title,
     description: task.description || "",
     priority: priorityMap[task.priority] || 2,
@@ -217,7 +224,7 @@ async function triggerLinearIntegration(config: any, event: IntegrationEvent) {
 /**
  * Trigger Zapier webhook
  */
-async function triggerZapierIntegration(config: any, event: IntegrationEvent) {
+async function triggerZapierIntegration(config: Record<string, unknown>, event: IntegrationEvent) {
   const task = event.task;
 
   const payload = {
@@ -239,5 +246,5 @@ async function triggerZapierIntegration(config: any, event: IntegrationEvent) {
     },
   };
 
-  await sendZapierWebhook(config, payload);
+  await sendZapierWebhook(config as unknown as ZapierConfig, payload);
 }

@@ -222,7 +222,7 @@ export async function POST(request: NextRequest) {
 
             try {
               await pusherServer.trigger(
-                `organization-${organizationId}`,
+                `private-organization-${organizationId}`,
                 "subscription-updated",
                 {
                   subscriptionId: updatedSubscription.id,
@@ -294,7 +294,7 @@ export async function POST(request: NextRequest) {
               }
               try {
                 await pusherServer.trigger(
-                  `organization-${existing.organizationId}`,
+                  `private-organization-${existing.organizationId}`,
                   "subscription-updated",
                   {
                     subscriptionId: updatedSubscription.id,
@@ -347,7 +347,7 @@ export async function POST(request: NextRequest) {
 
             try {
               await pusherServer.trigger(
-                `organization-${organizationId}`,
+                `private-organization-${organizationId}`,
                 "subscription-updated",
                 {
                   subscriptionId: updatedSubscription.id,
@@ -384,7 +384,7 @@ export async function POST(request: NextRequest) {
 
               try {
                 await pusherServer.trigger(
-                  `organization-${subscription.organizationId}`,
+                  `private-organization-${subscription.organizationId}`,
                   "subscription-updated",
                   {
                     subscriptionId: updatedSubscription.id,
@@ -447,7 +447,7 @@ export async function POST(request: NextRequest) {
 
               try {
                 await pusherServer.trigger(
-                  `organization-${subscription.organizationId}`,
+                  `private-organization-${subscription.organizationId}`,
                   "subscription-updated",
                   {
                     subscriptionId: updatedSubscription.id,
@@ -494,18 +494,23 @@ export async function POST(request: NextRequest) {
               );
             }
 
+            // Stripe API returns snake_case; SDK types may vary by version
+            const stripeSubscription = retrievedSub as unknown as Stripe.Subscription & {
+              current_period_start: number;
+              current_period_end: number;
+              cancel_at_period_end: boolean;
+            };
+
             console.log(
               "[checkout.session.completed] Retrieved subscription successfully:",
               {
                 id: retrievedSub.id,
                 status: retrievedSub.status,
-                currentPeriodStart: (retrievedSub as any).current_period_start,
-                currentPeriodEnd: (retrievedSub as any).current_period_end,
-                itemsCount: (retrievedSub as any).items?.data?.length || 0,
+                currentPeriodStart: stripeSubscription.current_period_start,
+                currentPeriodEnd: stripeSubscription.current_period_end,
+                itemsCount: stripeSubscription.items?.data?.length || 0,
               }
             );
-
-            const stripeSubscription = retrievedSub as any;
 
             const priceId = stripeSubscription.items?.data?.[0]?.price?.id;
 
@@ -580,22 +585,15 @@ export async function POST(request: NextRequest) {
                       ? "PAST_DUE"
                       : "CANCELED",
                   currentPeriodStart:
-                    typeof (stripeSubscription as any).current_period_start ===
-                    "number"
-                      ? new Date(
-                          (stripeSubscription as any).current_period_start *
-                            1000
-                        )
+                    typeof stripeSubscription.current_period_start === "number"
+                      ? new Date(stripeSubscription.current_period_start * 1000)
                       : null,
                   currentPeriodEnd:
-                    typeof (stripeSubscription as any).current_period_end ===
-                    "number"
-                      ? new Date(
-                          (stripeSubscription as any).current_period_end * 1000
-                        )
+                    typeof stripeSubscription.current_period_end === "number"
+                      ? new Date(stripeSubscription.current_period_end * 1000)
                       : null,
                   cancelAtPeriodEnd:
-                    (stripeSubscription as any).cancel_at_period_end ?? false,
+                    stripeSubscription.cancel_at_period_end ?? false,
                 },
                 create: {
                   organizationId,
@@ -611,22 +609,15 @@ export async function POST(request: NextRequest) {
                       ? "PAST_DUE"
                       : "CANCELED",
                   currentPeriodStart:
-                    typeof (stripeSubscription as any).current_period_start ===
-                    "number"
-                      ? new Date(
-                          (stripeSubscription as any).current_period_start *
-                            1000
-                        )
+                    typeof stripeSubscription.current_period_start === "number"
+                      ? new Date(stripeSubscription.current_period_start * 1000)
                       : null,
                   currentPeriodEnd:
-                    typeof (stripeSubscription as any).current_period_end ===
-                    "number"
-                      ? new Date(
-                          (stripeSubscription as any).current_period_end * 1000
-                        )
+                    typeof stripeSubscription.current_period_end === "number"
+                      ? new Date(stripeSubscription.current_period_end * 1000)
                       : null,
                   cancelAtPeriodEnd:
-                    (stripeSubscription as any).cancel_at_period_end ?? false,
+                    stripeSubscription.cancel_at_period_end ?? false,
                 },
               });
             } catch (dbError) {
@@ -719,7 +710,7 @@ export async function POST(request: NextRequest) {
 
             try {
               await pusherServer.trigger(
-                `organization-${organizationId}`,
+                `private-organization-${organizationId}`,
                 "subscription-updated",
                 {
                   subscriptionId: updatedSubscription.id,

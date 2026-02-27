@@ -12,14 +12,17 @@ const pool = new Pool({
 
 const adapter = new PrismaPg(pool);
 
+// No query/warn logging by default so DB schema and queries are never visible in browser or terminal.
+// Set DEBUG_PRISMA=1 in env to enable query logging locally for debugging only.
+const enableQueryLog =
+  process.env.NODE_ENV === "development" &&
+  process.env.DEBUG_PRISMA === "1";
+
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
     adapter,
-    log:
-      process.env.NODE_ENV === "development"
-        ? ["query", "error", "warn"]
-        : ["error"],
+    log: enableQueryLog ? ["query", "error", "warn"] : ["error"],
   });
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;

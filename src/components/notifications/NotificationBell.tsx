@@ -34,7 +34,7 @@ export function NotificationBell() {
 
   // Listen for new notifications
   useRealtime({
-    channelName: session?.user?.id ? `user-${session.user.id}` : "",
+    channelName: session?.user?.id ? `private-user-${session.user.id}` : "",
     eventName: "notification-created",
     callback: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });

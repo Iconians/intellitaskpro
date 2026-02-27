@@ -62,6 +62,7 @@ export function RecurringTaskModal({
 
   useEffect(() => {
     if (task) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sync recurring task from server to form state
       setTitle(task.title);
       setDescription(task.description || "");
       setPriority(task.priority as TaskPriority);
@@ -81,7 +82,7 @@ export function RecurringTaskModal({
   }, [task]);
 
   const createMutation = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: Record<string, unknown>) => {
       const url = task ? `/api/recurring-tasks/${task.id}` : "/api/recurring-tasks";
       const method = task ? "PATCH" : "POST";
       const res = await fetch(url, {
@@ -108,7 +109,7 @@ export function RecurringTaskModal({
       return;
     }
 
-    const data: any = {
+    const data: Record<string, unknown> = {
       boardId,
       title,
       description: description || null,
@@ -203,7 +204,7 @@ export function RecurringTaskModal({
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
               <option value="">Unassigned</option>
-              {members.map((bm: any) => (
+              {members.map((bm: { memberId: string; member?: { user?: { name?: string | null; email?: string | null } } }) => (
                 <option key={bm.memberId} value={bm.memberId}>
                   {bm.member?.user?.name || bm.member?.user?.email}
                 </option>

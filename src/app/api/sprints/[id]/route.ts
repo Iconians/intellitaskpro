@@ -108,7 +108,7 @@ export async function PATCH(
 
     
     try {
-      await pusherServer.trigger(`board-${sprint.boardId}`, "sprint-updated", {
+      await pusherServer.trigger(`private-board-${sprint.boardId}`, "sprint-updated", {
         sprint: updatedSprint,
       });
     } catch (pusherError) {
@@ -150,7 +150,7 @@ export async function DELETE(
 
     
     try {
-      await pusherServer.trigger(`board-${sprint.boardId}`, "sprint-deleted", {
+      await pusherServer.trigger(`private-board-${sprint.boardId}`, "sprint-deleted", {
         sprintId: id,
       });
     } catch (pusherError) {

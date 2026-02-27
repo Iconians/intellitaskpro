@@ -97,7 +97,7 @@ export async function POST(
       });
     }
 
-    await triggerPusherEvent(`board-${task.boardId}`, "task-custom-field-updated", {
+    await triggerPusherEvent(`private-board-${task.boardId}`, "task-custom-field-updated", {
       taskId: id,
       taskCustomField,
     });

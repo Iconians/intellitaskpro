@@ -12,7 +12,7 @@ interface Template {
   taskDescription: string | null;
   priority: TaskPriority;
   estimatedHours: number | null;
-  checklistItems: any;
+  checklistItems: Array<{ text: string; order?: number }> | null;
   tags: string[];
 }
 

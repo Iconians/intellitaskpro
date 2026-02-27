@@ -72,7 +72,7 @@ export async function POST(
       },
     });
 
-    await triggerPusherEvent(`board-${boardId}`, "column-created", {
+    await triggerPusherEvent(`private-board-${boardId}`, "column-created", {
       id: column.id,
       boardId: column.boardId,
       name: column.name,

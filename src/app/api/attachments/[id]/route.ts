@@ -78,7 +78,7 @@ export async function DELETE(
     });
 
     await triggerPusherEvent(
-      `board-${attachment.task.boardId}`,
+      `private-board-${attachment.task.boardId}`,
       "attachment-deleted",
       { attachmentId: id }
     );

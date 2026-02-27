@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma, CustomFieldType } from "@prisma/client";
 import { requireBoardAccess } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { triggerPusherEvent } from "@/lib/pusher";
-import { CustomFieldType } from "@prisma/client";
 
 export async function GET(
   _request: NextRequest,
@@ -74,7 +74,7 @@ export async function POST(
       },
     });
 
-    await triggerPusherEvent(`board-${id}`, "custom-field-created", customField);
+    await triggerPusherEvent(`private-board-${id}`, "custom-field-created", customField);
 
     return NextResponse.json(customField);
   } catch (error) {
@@ -102,7 +102,7 @@ export async function PATCH(
 
     await requireBoardAccess(id, "ADMIN");
 
-    const updateData: any = {};
+    const updateData: Prisma.CustomFieldUpdateInput = {};
     if (name !== undefined) updateData.name = name;
     if (type !== undefined) {
       const validTypes = Object.values(CustomFieldType);
@@ -124,7 +124,7 @@ export async function PATCH(
       data: updateData,
     });
 
-    await triggerPusherEvent(`board-${id}`, "custom-field-updated", customField);
+    await triggerPusherEvent(`private-board-${id}`, "custom-field-updated", customField);
 
     return NextResponse.json(customField);
   } catch (error) {
@@ -156,7 +156,7 @@ export async function DELETE(
       where: { id: fieldId },
     });
 
-    await triggerPusherEvent(`board-${id}`, "custom-field-deleted", {
+    await triggerPusherEvent(`private-board-${id}`, "custom-field-deleted", {
       fieldId,
     });
 

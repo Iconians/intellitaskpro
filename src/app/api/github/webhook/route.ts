@@ -27,16 +27,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (signature) {
-      const hmac = crypto.createHmac("sha256", GITHUB_WEBHOOK_SECRET);
-      const digest = "sha256=" + hmac.update(body).digest("hex");
+    if (!signature) {
+      return NextResponse.json(
+        { error: "Missing x-hub-signature-256 header" },
+        { status: 401 }
+      );
+    }
 
-      if (signature !== digest) {
-        return NextResponse.json(
-          { error: "Invalid signature" },
-          { status: 401 }
-        );
-      }
+    const hmac = crypto.createHmac("sha256", GITHUB_WEBHOOK_SECRET);
+    const digest = "sha256=" + hmac.update(body).digest("hex");
+
+    if (signature !== digest) {
+      return NextResponse.json(
+        { error: "Invalid signature" },
+        { status: 401 }
+      );
     }
 
     const event = JSON.parse(body);
@@ -214,7 +219,7 @@ export async function POST(request: NextRequest) {
           );
 
           const { triggerPusherEvent } = await import("@/lib/pusher");
-          await triggerPusherEvent(`board-${board.id}`, "task-updated", {
+          await triggerPusherEvent(`private-board-${board.id}`, "task-updated", {
             id: task.id,
             boardId: board.id,
             status: task.status,

@@ -34,10 +34,12 @@ export function BrandingSettings({ organizationId, onClose }: BrandingSettingsPr
 
   useEffect(() => {
     if (settings) {
+      /* eslint-disable react-hooks/set-state-in-effect -- sync server settings to form state */
       setLogoUrl(settings.logoUrl || "");
       setPrimaryColor(settings.primaryColor || "#3B82F6");
       setSecondaryColor(settings.secondaryColor || "#8B5CF6");
       setCustomDomain(settings.customDomain || "");
+      /* eslint-enable react-hooks/set-state-in-effect */
     }
   }, [settings]);
 

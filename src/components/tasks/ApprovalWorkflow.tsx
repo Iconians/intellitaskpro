@@ -228,7 +228,7 @@ export function ApprovalWorkflow({
                   required
                 >
                   <option value="">Select an approver</option>
-                  {members.map((bm: any) => (
+                  {members.map((bm: { memberId: string; member: { user: { id: string; name: string | null; email: string } } }) => (
                     <option key={bm.memberId} value={bm.member.user.id}>
                       {bm.member.user.name || bm.member.user.email}
                     </option>

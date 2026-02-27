@@ -27,10 +27,7 @@ export function useRealtime({
 
   useEffect(() => {
     const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY;
-    if (!pusherKey) {
-      console.warn("Pusher key not found, real-time updates disabled");
-      return;
-    }
+    if (!pusherKey) return;
 
     
     if (!globalPusher) {

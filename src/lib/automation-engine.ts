@@ -1,5 +1,5 @@
 import { prisma } from "./prisma";
-import { AutomationTrigger, AutomationAction } from "@prisma/client";
+import { AutomationTrigger, AutomationAction, TaskStatus, TaskPriority } from "@prisma/client";
 import { createNotification, notifyTaskWatchers } from "./notifications";
 import { logActivity } from "./activity-logger";
 
@@ -35,7 +35,7 @@ export async function executeAutomations(
     for (const rule of rules) {
       // Check conditions
       if (rule.conditions) {
-        const conditions = rule.conditions as any;
+        const conditions = rule.conditions as { status?: string; priority?: string; boardId?: string };
         let shouldExecute = true;
 
         // Evaluate conditions based on context
@@ -61,7 +61,7 @@ export async function executeAutomations(
       }
 
       // Execute action
-      await executeAction(rule.action, rule.actionParams as any, context);
+      await executeAction(rule.action, (rule.actionParams ?? {}) as Record<string, unknown>, context);
     }
   } catch (error) {
     console.error("Failed to execute automations:", error);
@@ -70,7 +70,7 @@ export async function executeAutomations(
 
 async function executeAction(
   action: AutomationAction,
-  actionParams: any,
+  actionParams: Record<string, unknown>,
   context: AutomationContext
 ) {
   if (!context.taskId) {
@@ -80,11 +80,12 @@ async function executeAction(
   switch (action) {
     case "ASSIGN_TASK":
       if (actionParams.assigneeId) {
+        const assigneeId = actionParams.assigneeId as string;
         await prisma.task.update({
           where: { id: context.taskId },
-          data: { assigneeId: actionParams.assigneeId },
+          data: { assigneeId },
         });
-        await logActivity("TASK_ASSIGNED", actionParams.assigneeId, {
+        await logActivity("TASK_ASSIGNED", assigneeId, {
           taskId: context.taskId,
           boardId: context.boardId,
           organizationId: context.organizationId,
@@ -94,17 +95,18 @@ async function executeAction(
 
     case "CHANGE_STATUS":
       if (actionParams.status && context.boardId) {
+        const newStatus = actionParams.status as TaskStatus;
         const statusColumn = await prisma.taskStatusColumn.findFirst({
           where: {
             boardId: context.boardId,
-            status: actionParams.status,
+            status: newStatus,
           },
         });
 
         await prisma.task.update({
           where: { id: context.taskId },
           data: {
-            status: actionParams.status,
+            status: newStatus,
             statusColumnId: statusColumn?.id || null,
           },
         });
@@ -115,7 +117,7 @@ async function executeAction(
           organizationId: context.organizationId,
           metadata: {
             oldStatus: context.oldStatus,
-            newStatus: actionParams.status,
+            newStatus,
           },
         });
       }
@@ -124,19 +126,19 @@ async function executeAction(
     case "SEND_NOTIFICATION":
       if (actionParams.userId) {
         await createNotification({
-          userId: actionParams.userId,
+          userId: actionParams.userId as string,
           type: "AUTOMATION",
-          title: actionParams.title || "Automation Notification",
-          message: actionParams.message || "An automation rule was triggered",
-          link: actionParams.link,
+          title: (actionParams.title as string) || "Automation Notification",
+          message: (actionParams.message as string) || "An automation rule was triggered",
+          link: actionParams.link as string | undefined,
         });
       } else if (context.taskId) {
         // Notify all watchers
         await notifyTaskWatchers(
           context.taskId,
           "AUTOMATION",
-          actionParams.title || "Task Updated",
-          actionParams.message || "An automation rule was triggered"
+          (actionParams.title as string) || "Task Updated",
+          (actionParams.message as string) || "An automation rule was triggered"
         );
       }
       break;
@@ -148,22 +150,23 @@ async function executeAction(
           select: { status: true },
         });
 
+        const defaultStatus: TaskStatus = "TODO";
         const statusColumn = await prisma.taskStatusColumn.findFirst({
           where: {
             boardId: context.boardId,
-            status: parentTask?.status || "TODO",
+            status: parentTask?.status ?? defaultStatus,
           },
         });
 
         await prisma.task.create({
           data: {
-            title: actionParams.title,
-            description: actionParams.description || null,
+            title: actionParams.title as string,
+            description: (actionParams.description as string | null) ?? null,
             boardId: context.boardId,
             parentTaskId: context.taskId,
-            status: parentTask?.status || "TODO",
-            priority: actionParams.priority || "MEDIUM",
-            statusColumnId: statusColumn?.id || null,
+            status: parentTask?.status ?? defaultStatus,
+            priority: (actionParams.priority as TaskPriority) ?? "MEDIUM",
+            statusColumnId: statusColumn?.id ?? null,
           },
         });
       }
@@ -175,7 +178,7 @@ async function executeAction(
           data: {
             taskId: context.taskId,
             userId: context.userId,
-            content: actionParams.content,
+            content: actionParams.content as string,
           },
         });
       }

@@ -1,7 +1,8 @@
 import { prisma } from "./prisma";
 import { authOptions } from "./auth-config";
 import { getServerSession } from "next-auth";
-import type { BoardMember, Member, User } from "@prisma/client";
+import type { BoardMember, Member, User, Subscription, Plan } from "@prisma/client";
+import { isDeveloperOrganization } from "./developer";
 
 
 type BoardMemberWithIncludes = BoardMember & {
@@ -187,7 +188,32 @@ export async function requireBoardAccess(
   return { boardMember, orgMember, board };
 }
 
-export async function requirePaidSubscription(organizationId: string) {
+export async function requirePaidSubscription(
+  organizationId: string
+): Promise<Subscription & { plan: Plan }> {
+  if (isDeveloperOrganization(organizationId)) {
+    const enterprisePlan = await prisma.plan.findFirst({
+      where: { name: "Enterprise" },
+    });
+    if (enterprisePlan) {
+      const now = new Date();
+      return {
+        id: "developer",
+        organizationId,
+        planId: enterprisePlan.id,
+        plan: enterprisePlan,
+        status: "ACTIVE",
+        stripeCustomerId: null,
+        stripeSubscriptionId: null,
+        currentPeriodStart: null,
+        currentPeriodEnd: null,
+        cancelAtPeriodEnd: false,
+        createdAt: now,
+        updatedAt: now,
+      };
+    }
+  }
+
   const subscription = await prisma.subscription.findUnique({
     where: { organizationId },
     include: {

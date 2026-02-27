@@ -10,7 +10,7 @@ interface RoleEditorProps {
 interface CustomRole {
   id: string;
   name: string;
-  permissions: any;
+  permissions: Record<string, boolean>;
   createdAt: string;
   _count?: {
     members: number;

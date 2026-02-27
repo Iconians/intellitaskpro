@@ -43,7 +43,7 @@ export async function PATCH(
       data: updateData,
     });
 
-    await triggerPusherEvent(`board-${boardId}`, "column-updated", {
+    await triggerPusherEvent(`private-board-${boardId}`, "column-updated", {
       id: updatedColumn.id,
       boardId: updatedColumn.boardId,
       name: updatedColumn.name,
@@ -118,7 +118,7 @@ export async function DELETE(
       where: { id: columnId },
     });
 
-    await triggerPusherEvent(`board-${boardId}`, "column-deleted", {
+    await triggerPusherEvent(`private-board-${boardId}`, "column-deleted", {
       id: columnId,
       boardId,
     });

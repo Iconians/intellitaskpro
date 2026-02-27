@@ -34,6 +34,8 @@ const envConfig: EnvConfig = {
     "ANTHROPIC_API_KEY",
     "OLLAMA_URL",
     "REDIS_URL",
+    "CRON_SECRET",
+    "DEVELOPER_ORGANIZATION_IDS",
   ],
   productionOnly: [
     "STRIPE_SECRET_KEY",
@@ -90,7 +92,12 @@ export function validateEnv() {
   }
 }
 
-if (typeof window === "undefined") {
+// Skip validation during Next.js build so CI can run without real secrets (routes are only analyzed, not executed).
+const isBuildPhase =
+  process.env.NEXT_PHASE === "phase-production-build" ||
+  process.env.CI === "true";
+
+if (typeof window === "undefined" && !isBuildPhase) {
   try {
     validateEnv();
   } catch (error) {

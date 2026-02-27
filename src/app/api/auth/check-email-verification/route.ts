@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ emailVerified: user.emailVerified });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json(
       { error: "Failed to check email verification" },
       { status: 500 }

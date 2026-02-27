@@ -178,7 +178,7 @@ export async function POST(
     // Note: Attachments are not cloned as they reference file storage paths
     // This would require file copying logic
 
-    await triggerPusherEvent(`board-${finalBoardId}`, "task-cloned", {
+    await triggerPusherEvent(`private-board-${finalBoardId}`, "task-cloned", {
       originalTaskId: id,
       clonedTaskId: clonedTask.id,
     });

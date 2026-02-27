@@ -1,27 +1,17 @@
 "use client";
 
-import { useTheme } from "@/components/providers/ThemeProvider";
+import { useThemeOptional } from "@/components/providers/ThemeProvider";
 import { useEffect, useState } from "react";
 
 export function ThemeToggle() {
+  const themeContext = useThemeOptional();
   const [mounted, setMounted] = useState(false);
-
-  
-  let themeContext:
-    | { theme: "light" | "dark"; toggleTheme: () => void }
-    | undefined;
-  try {
-    themeContext = useTheme();
-  } catch {
-    
-  }
+  const [fallbackTheme, setFallbackTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- client-only mount flag for hydration
     setMounted(true);
   }, []);
-
-  
-  const [fallbackTheme, setFallbackTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
     if (!themeContext && typeof window !== "undefined") {
@@ -34,6 +24,7 @@ export function ThemeToggle() {
         ? "dark"
         : "light";
       const initialTheme = savedTheme || systemTheme;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sync theme from localStorage/DOM on client
       setFallbackTheme(initialTheme);
       if (initialTheme === "dark") {
         document.documentElement.classList.add("dark");
@@ -41,7 +32,7 @@ export function ThemeToggle() {
     }
   }, [themeContext]);
 
-  const currentTheme = themeContext?.theme || fallbackTheme;
+  const currentTheme = themeContext?.theme ?? fallbackTheme;
 
   const handleToggle = () => {
     if (themeContext) {

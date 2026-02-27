@@ -29,7 +29,7 @@ async function initRedis(): Promise<RedisClient | null> {
     } | null = null;
     try {
       redisModule = await new Function('return import("redis")')();
-    } catch (importError) {
+    } catch (_importError) {
       return null;
     }
 

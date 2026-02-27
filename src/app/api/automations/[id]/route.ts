@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma, AutomationTrigger, AutomationAction } from "@prisma/client";
 import { requireMember } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { AutomationTrigger, AutomationAction } from "@prisma/client";
 
 export async function GET(
   _request: NextRequest,
@@ -52,7 +52,7 @@ export async function PATCH(
 
     await requireMember(automation.organizationId, "ADMIN");
 
-    const updateData: any = {};
+    const updateData: Prisma.AutomationRuleUpdateInput = {};
 
     if (body.name !== undefined) updateData.name = body.name;
     if (body.description !== undefined) updateData.description = body.description;

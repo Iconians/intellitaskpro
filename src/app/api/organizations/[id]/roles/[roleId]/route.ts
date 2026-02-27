@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { requireMember } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -24,7 +25,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Role not found" }, { status: 404 });
     }
 
-    const updateData: any = {};
+    const updateData: Prisma.CustomRoleUpdateInput = {};
     if (name !== undefined) updateData.name = name;
     if (permissions !== undefined) updateData.permissions = permissions;
 

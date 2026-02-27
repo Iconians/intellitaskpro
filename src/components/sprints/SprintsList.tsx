@@ -47,7 +47,7 @@ export function SprintsList({ boardId, userBoardRole }: SprintsListProps) {
 
   
   useRealtime({
-    channelName: `board-${boardId}`,
+    channelName: `private-board-${boardId}`,
     eventName: "sprint-created",
     callback: () => {
       queryClient.invalidateQueries({ queryKey: ["sprints", boardId] });
@@ -55,7 +55,7 @@ export function SprintsList({ boardId, userBoardRole }: SprintsListProps) {
   });
 
   useRealtime({
-    channelName: `board-${boardId}`,
+    channelName: `private-board-${boardId}`,
     eventName: "sprint-updated",
     callback: () => {
       queryClient.invalidateQueries({ queryKey: ["sprints", boardId] });
@@ -63,7 +63,7 @@ export function SprintsList({ boardId, userBoardRole }: SprintsListProps) {
   });
 
   useRealtime({
-    channelName: `board-${boardId}`,
+    channelName: `private-board-${boardId}`,
     eventName: "sprint-deleted",
     callback: () => {
       queryClient.invalidateQueries({ queryKey: ["sprints", boardId] });

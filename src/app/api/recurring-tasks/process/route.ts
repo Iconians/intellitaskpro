@@ -1,20 +1,46 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { TaskStatus, RecurrencePattern } from "@prisma/client";
+import { TaskStatus, RecurrencePattern, type RecurringTask } from "@prisma/client";
 import { triggerPusherEvent } from "@/lib/pusher";
 
-// This endpoint should be called periodically (e.g., via cron job)
+// Vercel cron sends GET; external crons may use POST. Both are supported.
+function requireCronAuth(request: NextRequest): NextResponse | null {
+  const authHeader = request.headers.get("authorization");
+  const apiKey = process.env.CRON_SECRET;
+
+  if (!apiKey) {
+    return NextResponse.json(
+      {
+        error:
+          "CRON_SECRET is not configured. Set it in your environment to secure this endpoint.",
+      },
+      { status: 503 }
+    );
+  }
+
+  if (authHeader !== `Bearer ${apiKey}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  return null;
+}
+
+export async function GET(request: NextRequest) {
+  const authError = requireCronAuth(request);
+  if (authError) return authError;
+  return runProcess();
+}
+
+// This endpoint should be called periodically (e.g., via Vercel cron or external cron)
 // It processes recurring tasks that are due to be created
 export async function POST(request: NextRequest) {
-  try {
-    // Optional: Add API key authentication for security
-    const authHeader = request.headers.get("authorization");
-    const apiKey = process.env.CRON_SECRET;
-    
-    if (apiKey && authHeader !== `Bearer ${apiKey}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  const authError = requireCronAuth(request);
+  if (authError) return authError;
+  return runProcess();
+}
 
+async function runProcess() {
+  try {
     const now = new Date();
     
     // Find all active recurring tasks that are due
@@ -120,7 +146,7 @@ export async function POST(request: NextRequest) {
       });
 
       // Trigger real-time update
-      await triggerPusherEvent(`board-${recurringTask.boardId}`, "task-created", task);
+      await triggerPusherEvent(`private-board-${recurringTask.boardId}`, "task-created", task);
     }
 
     return NextResponse.json({
@@ -136,7 +162,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function calculateNextOccurrence(recurringTask: any): Date {
+function calculateNextOccurrence(recurringTask: RecurringTask): Date {
   const current = new Date(recurringTask.nextOccurrence);
   const next = new Date(current);
 

@@ -143,7 +143,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.redirect(
           `${NEXTAUTH_URL}/boards/${state}?github=connected`
         );
-      } catch (error) {
+      } catch (_error) {
         return NextResponse.redirect(
           `${NEXTAUTH_URL}/boards?error=${encodeURIComponent(
             "Failed to connect GitHub"

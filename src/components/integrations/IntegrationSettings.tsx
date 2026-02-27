@@ -11,7 +11,7 @@ interface IntegrationSettingsProps {
 interface Integration {
   id: string;
   provider: IntegrationProvider;
-  config: any;
+  config: Record<string, unknown>;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -20,7 +20,8 @@ interface Integration {
 export function IntegrationSettings({ organizationId }: IntegrationSettingsProps) {
   const queryClient = useQueryClient();
   const [selectedProvider, setSelectedProvider] = useState<IntegrationProvider | null>(null);
-  const [config, setConfig] = useState<any>({});
+  const [editingIntegrationId, setEditingIntegrationId] = useState<string | null>(null);
+  const [config, setConfig] = useState<Record<string, unknown>>({});
   const [showInstructions, setShowInstructions] = useState<IntegrationProvider | null>(null);
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
 
@@ -39,7 +40,7 @@ export function IntegrationSettings({ organizationId }: IntegrationSettingsProps
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: { provider: IntegrationProvider; config: any }) => {
+    mutationFn: async (data: { provider: IntegrationProvider; config: Record<string, unknown> }) => {
       const res = await fetch("/api/integrations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -55,12 +56,13 @@ export function IntegrationSettings({ organizationId }: IntegrationSettingsProps
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["integrations", organizationId] });
       setSelectedProvider(null);
+      setEditingIntegrationId(null);
       setConfig({});
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, config: newConfig, isActive }: { id: string; config?: any; isActive?: boolean }) => {
+    mutationFn: async ({ id, config: newConfig, isActive }: { id: string; config?: Record<string, unknown>; isActive?: boolean }) => {
       const res = await fetch(`/api/integrations/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -71,6 +73,9 @@ export function IntegrationSettings({ organizationId }: IntegrationSettingsProps
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["integrations", organizationId] });
+      setEditingIntegrationId(null);
+      setSelectedProvider(null);
+      setConfig({});
     },
   });
 
@@ -88,7 +93,7 @@ export function IntegrationSettings({ organizationId }: IntegrationSettingsProps
   });
 
   const testMutation = useMutation({
-    mutationFn: async ({ integrationId, action, payload }: { integrationId: string; action: string; payload?: any }) => {
+    mutationFn: async ({ integrationId, action, payload }: { integrationId: string; action: string; payload?: Record<string, unknown> }) => {
       try {
         const res = await fetch(`/api/integrations/${integrationId}`, {
           method: "PATCH",
@@ -117,15 +122,33 @@ export function IntegrationSettings({ organizationId }: IntegrationSettingsProps
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Webhook URL
+                Webhook URL <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
-                value={config.webhookUrl || ""}
+                value={String(config.webhookUrl ?? "")}
                 onChange={(e) => setConfig({ ...config, webhookUrl: e.target.value })}
                 placeholder="https://hooks.slack.com/services/..."
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
               />
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                For sending notifications from this app to Slack
+              </p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Signing secret (for incoming webhooks)
+              </label>
+              <input
+                type="password"
+                value={String(config.signingSecret ?? "")}
+                onChange={(e) => setConfig({ ...config, signingSecret: e.target.value })}
+                placeholder="Optional: paste from Slack app → Basic Information → Signing Secret"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+              />
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Required to verify requests from Slack (slash commands, events). Get it from your Slack app → Basic Information → Signing Secret.
+              </p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -133,7 +156,7 @@ export function IntegrationSettings({ organizationId }: IntegrationSettingsProps
               </label>
               <input
                 type="text"
-                value={config.channel || ""}
+                value={String(config.channel ?? "")}
                 onChange={(e) => setConfig({ ...config, channel: e.target.value })}
                 placeholder="#general"
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
@@ -145,7 +168,7 @@ export function IntegrationSettings({ organizationId }: IntegrationSettingsProps
               </label>
               <input
                 type="text"
-                value={config.username || ""}
+                value={String(config.username ?? "")}
                 onChange={(e) => setConfig({ ...config, username: e.target.value })}
                 placeholder="Project Management"
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
@@ -159,11 +182,11 @@ export function IntegrationSettings({ organizationId }: IntegrationSettingsProps
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Base URL
+                Base URL <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
-                value={config.baseUrl || ""}
+                value={String(config.baseUrl ?? "")}
                 onChange={(e) => setConfig({ ...config, baseUrl: e.target.value })}
                 placeholder="https://yourcompany.atlassian.net"
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
@@ -171,11 +194,11 @@ export function IntegrationSettings({ organizationId }: IntegrationSettingsProps
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Email
+                Email <span className="text-red-500">*</span>
               </label>
               <input
                 type="email"
-                value={config.email || ""}
+                value={String(config.email ?? "")}
                 onChange={(e) => setConfig({ ...config, email: e.target.value })}
                 placeholder="your@email.com"
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
@@ -183,11 +206,11 @@ export function IntegrationSettings({ organizationId }: IntegrationSettingsProps
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                API Token
+                API Token <span className="text-red-500">*</span>
               </label>
               <input
                 type="password"
-                value={config.apiToken || ""}
+                value={String(config.apiToken ?? "")}
                 onChange={(e) => setConfig({ ...config, apiToken: e.target.value })}
                 placeholder="Your Jira API token"
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
@@ -195,15 +218,30 @@ export function IntegrationSettings({ organizationId }: IntegrationSettingsProps
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Project Key
+                Project Key <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
-                value={config.projectKey || ""}
+                value={String(config.projectKey ?? "")}
                 onChange={(e) => setConfig({ ...config, projectKey: e.target.value })}
                 placeholder="PROJ"
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Webhook secret (optional, for incoming webhooks)
+              </label>
+              <input
+                type="password"
+                value={String(config.webhookSecret ?? "")}
+                onChange={(e) => setConfig({ ...config, webhookSecret: e.target.value })}
+                placeholder="If Jira webhook uses a shared secret, paste it here"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+              />
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Used to verify incoming webhooks from Jira when configured
+              </p>
             </div>
           </div>
         );
@@ -213,11 +251,11 @@ export function IntegrationSettings({ organizationId }: IntegrationSettingsProps
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                API Key
+                API Key <span className="text-red-500">*</span>
               </label>
               <input
                 type="password"
-                value={config.apiKey || ""}
+                value={String(config.apiKey ?? "")}
                 onChange={(e) => setConfig({ ...config, apiKey: e.target.value })}
                 placeholder="lin_api_..."
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
@@ -225,15 +263,30 @@ export function IntegrationSettings({ organizationId }: IntegrationSettingsProps
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Team ID
+                Team ID <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
-                value={config.teamId || ""}
+                value={String(config.teamId ?? "")}
                 onChange={(e) => setConfig({ ...config, teamId: e.target.value })}
                 placeholder="Team UUID"
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Webhook secret (for incoming webhooks)
+              </label>
+              <input
+                type="password"
+                value={String(config.webhookSecret ?? "")}
+                onChange={(e) => setConfig({ ...config, webhookSecret: e.target.value })}
+                placeholder="Paste the secret from Linear webhook settings"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+              />
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                When you create a webhook in Linear (Settings → API → Webhooks), copy the secret here so we can verify incoming requests.
+              </p>
             </div>
           </div>
         );
@@ -243,15 +296,18 @@ export function IntegrationSettings({ organizationId }: IntegrationSettingsProps
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Webhook URL
+                Webhook URL <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
-                value={config.webhookUrl || ""}
+                value={String(config.webhookUrl ?? "")}
                 onChange={(e) => setConfig({ ...config, webhookUrl: e.target.value })}
                 placeholder="https://hooks.zapier.com/hooks/catch/..."
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
               />
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                From Zapier: Webhooks by Zapier → Catch Hook. Keep this URL private; it acts as the secret.
+              </p>
             </div>
           </div>
         );
@@ -263,7 +319,24 @@ export function IntegrationSettings({ organizationId }: IntegrationSettingsProps
 
   const handleSave = () => {
     if (!selectedProvider) return;
-    createMutation.mutate({ provider: selectedProvider, config });
+    if (editingIntegrationId) {
+      const existing = existingIntegrations.find((i) => i.id === editingIntegrationId);
+      const existingConfig = (existing?.config || {}) as Record<string, unknown>;
+      const secretKeys = ["signingSecret", "webhookSecret", "apiToken", "apiKey"];
+      const mergedConfig = { ...config };
+      for (const key of secretKeys) {
+        if (mergedConfig[key] === "" && existingConfig[key]) {
+          mergedConfig[key] = existingConfig[key];
+        }
+      }
+      updateMutation.mutate({
+        id: editingIntegrationId,
+        config: mergedConfig,
+      });
+      setEditingIntegrationId(null);
+    } else {
+      createMutation.mutate({ provider: selectedProvider, config });
+    }
   };
 
   const handleTest = async (integration: Integration) => {
@@ -335,7 +408,17 @@ export function IntegrationSettings({ organizationId }: IntegrationSettingsProps
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    onClick={() => {
+                      setEditingIntegrationId(integration.id);
+                      setSelectedProvider(integration.provider);
+                      setConfig(integration.config || {});
+                    }}
+                    className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700"
+                  >
+                    Edit
+                  </button>
                   <button
                     onClick={() => handleTest(integration)}
                     disabled={testMutation.isPending}
@@ -421,7 +504,7 @@ export function IntegrationSettings({ organizationId }: IntegrationSettingsProps
                           <ol className="list-decimal list-inside space-y-1 text-gray-700 dark:text-gray-300 ml-2">
                             <li>Go to <a href="https://api.slack.com/apps" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">api.slack.com/apps</a></li>
                             <li>Create a new app or select existing</li>
-                            <li>Enable "Incoming Webhooks"</li>
+                            <li>Enable &quot;Incoming Webhooks&quot;</li>
                             <li>Add webhook to workspace and copy the webhook URL</li>
                             <li>Paste it in the Webhook URL field above</li>
                           </ol>
@@ -432,9 +515,16 @@ export function IntegrationSettings({ organizationId }: IntegrationSettingsProps
                               Step 2: Configure Webhook URL in Slack (for events FROM Slack)
                             </p>
                             <ol className="list-decimal list-inside space-y-1 text-gray-700 dark:text-gray-300 ml-2">
-                              <li>In your Slack app settings, go to "Interactivity & Shortcuts" or "Slash Commands"</li>
+                              <li>In your Slack app settings, go to &quot;Interactivity &amp; Shortcuts&quot; or &quot;Slash Commands&quot;</li>
                               <li>Copy the Webhook URL shown above</li>
                               <li>Paste it as the Request URL in Slack</li>
+                            </ol>
+                            <p className="font-medium text-gray-900 dark:text-white mt-2 mb-1">
+                              Step 3: Add Signing secret (required to verify incoming requests)
+                            </p>
+                            <ol className="list-decimal list-inside space-y-1 text-gray-700 dark:text-gray-300 ml-2">
+                              <li>In Slack app: Basic Information → App Credentials → Signing Secret</li>
+                              <li>Copy the signing secret and paste it in the &quot;Signing secret&quot; field (click Edit on this integration if you already saved)</li>
                             </ol>
                           </div>
                         )}
@@ -459,10 +549,9 @@ export function IntegrationSettings({ organizationId }: IntegrationSettingsProps
                             </p>
                             <ol className="list-decimal list-inside space-y-1 text-gray-700 dark:text-gray-300 ml-2">
                               <li>In Jira: Settings → System → Webhooks</li>
-                              <li>Create a new webhook</li>
-                              <li>Copy the Webhook URL shown above</li>
-                              <li>Select events: "Issue Created", "Issue Updated"</li>
-                              <li>Save the webhook</li>
+                              <li>Create a new webhook and paste the Webhook URL shown above</li>
+                              <li>Select events: Issue Created, Issue Updated</li>
+                              <li>If Jira provides a shared secret for the webhook, paste it in the &quot;Webhook secret&quot; field (Edit this integration to add it)</li>
                             </ol>
                           </div>
                         )}
@@ -489,9 +578,9 @@ export function IntegrationSettings({ organizationId }: IntegrationSettingsProps
                             <ol className="list-decimal list-inside space-y-1 text-gray-700 dark:text-gray-300 ml-2">
                               <li>In Linear: Settings → API → Webhooks</li>
                               <li>Create a new webhook</li>
-                              <li>Copy the Webhook URL shown above</li>
-                              <li>Select events: "Issue Created", "Issue Updated"</li>
-                              <li>Save the webhook</li>
+                              <li>Copy the &quot;Webhook URL&quot; shown above into the webhook URL in Linear</li>
+                              <li>Copy the webhook secret Linear shows and paste it in the &quot;Webhook secret&quot; field above (click Edit if you already saved)</li>
+                              <li>Select events: Issue Created, Issue Updated</li>
                             </ol>
                           </div>
                         )}
@@ -504,11 +593,11 @@ export function IntegrationSettings({ organizationId }: IntegrationSettingsProps
                         </p>
                         <ol className="list-decimal list-inside space-y-1 text-gray-700 dark:text-gray-300 ml-2">
                           <li>Go to <a href="https://zapier.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">Zapier</a> and create a Zap</li>
-                          <li>Choose "Webhooks by Zapier" as the trigger</li>
-                          <li>Select "Catch Hook"</li>
+                          <li>Choose &quot;Webhooks by Zapier&quot; as the trigger</li>
+                          <li>Select &quot;Catch Hook&quot;</li>
                           <li>Copy the webhook URL from Zapier</li>
                           <li>Paste it in the Webhook URL field above</li>
-                          <li>When tasks are created/updated, they'll be sent to your Zapier webhook</li>
+                          <li>When tasks are created/updated, they&apos;ll be sent to your Zapier webhook</li>
                         </ol>
                       </div>
                     )}
@@ -573,11 +662,12 @@ export function IntegrationSettings({ organizationId }: IntegrationSettingsProps
         <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
           <div className="flex items-center justify-between mb-4">
             <h4 className="font-medium text-gray-900 dark:text-white">
-              Configure {selectedProvider}
+              {editingIntegrationId ? `Edit ${selectedProvider}` : `Configure ${selectedProvider}`}
             </h4>
             <button
               onClick={() => {
                 setSelectedProvider(null);
+                setEditingIntegrationId(null);
                 setConfig({});
               }}
               className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
@@ -617,10 +707,12 @@ export function IntegrationSettings({ organizationId }: IntegrationSettingsProps
           <div className="mt-4 flex gap-2">
             <button
               onClick={handleSave}
-              disabled={createMutation.isPending}
+              disabled={createMutation.isPending || updateMutation.isPending}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
             >
-              {createMutation.isPending ? "Saving..." : "Save"}
+              {editingIntegrationId
+                ? (updateMutation.isPending ? "Updating..." : "Update")
+                : (createMutation.isPending ? "Saving..." : "Save")}
             </button>
           </div>
         </div>

@@ -364,7 +364,7 @@ const emailTemplates = {
               inviterName || "Someone"
             }</strong> has invited you to join the organization <strong>${organizationName}</strong>.</p>
             <div style="text-align: center; margin: 30px 0;">
-              <a href="${baseUrl}/api/organizations/invite/accept?token=${token}" style="background: #30cfd0; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">Accept Invitation</a>
+              <a href="${baseUrl}/invite/accept?token=${token}" style="background: #30cfd0; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">Accept Invitation</a>
             </div>
             <p style="color: #666; font-size: 14px; margin-top: 30px;">This invitation will expire in 7 days.</p>
           </div>

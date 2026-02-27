@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "./prisma";
 import { triggerPusherEvent } from "./pusher";
 
@@ -7,7 +8,7 @@ export interface NotificationData {
   title: string;
   message: string;
   link?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export async function createNotification(data: NotificationData) {
@@ -19,13 +20,13 @@ export async function createNotification(data: NotificationData) {
         title: data.title,
         message: data.message,
         link: data.link || null,
-        metadata: data.metadata ? (data.metadata as any) : null,
+        metadata: data.metadata ? (data.metadata as Prisma.InputJsonValue) : undefined,
       },
     });
 
     // Trigger real-time update
     await triggerPusherEvent(
-      `user-${data.userId}`,
+      `private-user-${data.userId}`,
       "notification-created",
       notification
     );

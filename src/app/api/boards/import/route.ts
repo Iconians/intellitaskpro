@@ -30,7 +30,8 @@ export async function POST(request: NextRequest) {
 
     await requireMember(board.organizationId, "MEMBER");
 
-    let tasksToImport: any[] = [];
+    type ImportTask = Record<string, string | number | null | string[] | undefined>;
+    let tasksToImport: ImportTask[] = [];
 
     if (format === "json") {
       // data is already parsed JSON object
@@ -166,7 +167,7 @@ export async function POST(request: NextRequest) {
         for (let i = 1; i < lines.length; i++) {
           if (!lines[i].trim()) continue;
           const values = parseCSVLine(lines[i]).map((v: string) => v.replace(/^"|"$/g, ""));
-          const task: any = {};
+          const task: ImportTask = {};
           normalizedHeaders.forEach((header: string, index: number) => {
             const value = values[index] || "";
             // Map CSV headers to task fields
@@ -182,7 +183,7 @@ export async function POST(request: NextRequest) {
           });
           
           // Only add tasks that have at least a title
-          if (task.title && task.title.trim()) {
+          if (typeof task.title === "string" && task.title.trim()) {
             tasksToImport.push(task);
           }
         }
@@ -249,13 +250,13 @@ export async function POST(request: NextRequest) {
       const taskData = tasksToImport[i];
       try {
         // Validate required fields
-        if (!taskData.title || !taskData.title.trim()) {
+        if (typeof taskData.title !== "string" || !taskData.title.trim()) {
           errors.push(`Row ${i + 1}: Task title is required`);
           continue;
         }
 
         // Normalize and validate status
-        const status = normalizeStatus(taskData.status);
+        const status = normalizeStatus(typeof taskData.status === "string" ? taskData.status : undefined);
         
         // Get or create status column
         let statusColumn = await prisma.taskStatusColumn.findFirst({
@@ -278,10 +279,11 @@ export async function POST(request: NextRequest) {
 
         // Find assignee if email provided
         let assigneeId = null;
-        if (taskData.assignee) {
+        const assigneeStr = typeof taskData.assignee === "string" ? taskData.assignee : undefined;
+        if (assigneeStr) {
           try {
             const user = await prisma.user.findUnique({
-              where: { email: taskData.assignee },
+              where: { email: assigneeStr },
             });
             if (user) {
               const member = await prisma.member.findFirst({
@@ -293,31 +295,32 @@ export async function POST(request: NextRequest) {
               if (member) {
                 assigneeId = member.id;
               } else {
-                errors.push(`Row ${i + 1}: Assignee "${taskData.assignee}" is not a member of this organization`);
+                errors.push(`Row ${i + 1}: Assignee "${assigneeStr}" is not a member of this organization`);
               }
             } else {
-              errors.push(`Row ${i + 1}: Assignee "${taskData.assignee}" not found`);
+              errors.push(`Row ${i + 1}: Assignee "${assigneeStr}" not found`);
             }
-          } catch (err) {
-            errors.push(`Row ${i + 1}: Error looking up assignee "${taskData.assignee}"`);
+          } catch (_err) {
+            errors.push(`Row ${i + 1}: Error looking up assignee "${assigneeStr}"`);
           }
         }
 
         // Normalize and validate priority
-        const priority = normalizePriority(taskData.priority);
+        const priority = normalizePriority(typeof taskData.priority === "string" ? taskData.priority : undefined);
 
         // Validate due date if provided
         let dueDate = null;
-        if (taskData.dueDate) {
+        const dueDateVal = typeof taskData.dueDate === "string" || typeof taskData.dueDate === "number" ? taskData.dueDate : undefined;
+        if (dueDateVal !== undefined) {
           try {
-            const parsedDate = new Date(taskData.dueDate);
+            const parsedDate = new Date(dueDateVal);
             if (isNaN(parsedDate.getTime())) {
-              errors.push(`Row ${i + 1}: Invalid due date format "${taskData.dueDate}"`);
+              errors.push(`Row ${i + 1}: Invalid due date format "${dueDateVal}"`);
             } else {
               dueDate = parsedDate;
             }
-          } catch (err) {
-            errors.push(`Row ${i + 1}: Error parsing due date "${taskData.dueDate}"`);
+          } catch (_err) {
+            errors.push(`Row ${i + 1}: Error parsing due date "${dueDateVal}"`);
           }
         }
 
@@ -333,10 +336,12 @@ export async function POST(request: NextRequest) {
         }
 
         // Create task
+        const titleStr = typeof taskData.title === "string" ? taskData.title.trim() : "";
+        const descriptionStr = typeof taskData.description === "string" ? taskData.description.trim() : null;
         const task = await prisma.task.create({
           data: {
-            title: taskData.title.trim(),
-            description: taskData.description ? taskData.description.trim() : null,
+            title: titleStr,
+            description: descriptionStr,
             boardId,
             status,
             priority,
@@ -380,7 +385,10 @@ export async function POST(request: NextRequest) {
         // Import checklist items
         if (taskData.checklistItems && Array.isArray(taskData.checklistItems)) {
           for (let j = 0; j < taskData.checklistItems.length; j++) {
-            const item = taskData.checklistItems[j];
+            const raw = taskData.checklistItems[j];
+            const item = typeof raw === "object" && raw !== null && "text" in raw
+              ? raw as { text?: string; isCompleted?: boolean }
+              : { text: String(raw ?? ""), isCompleted: false };
             await prisma.checklistItem.create({
               data: {
                 taskId: task.id,

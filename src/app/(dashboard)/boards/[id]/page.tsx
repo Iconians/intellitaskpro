@@ -9,21 +9,24 @@ export default async function BoardPage({
 }) {
   const { id } = await params;
 
+  let board: Awaited<ReturnType<typeof requireBoardAccess>>["board"];
+  let boardMember: Awaited<ReturnType<typeof requireBoardAccess>>["boardMember"];
   try {
-    
-    const { board, boardMember } = await requireBoardAccess(id);
-
-    return (
-      <BoardPageClient
-        boardId={id}
-        boardName={board.name}
-        boardDescription={board.description}
-        userBoardRole={boardMember.role}
-        organizationId={board.organizationId}
-      />
-    );
-  } catch (error) {
-    
+    const result = await requireBoardAccess(id);
+    board = result.board;
+    boardMember = result.boardMember;
+  } catch {
     redirect("/boards");
   }
+
+  if (!board || !boardMember) return null;
+  return (
+    <BoardPageClient
+      boardId={id}
+      boardName={board.name}
+      boardDescription={board.description}
+      userBoardRole={boardMember.role}
+      organizationId={board.organizationId}
+    />
+  );
 }

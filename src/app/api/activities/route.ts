@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { getCurrentUser, requireMember, requireBoardAccess } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
       await requireBoardAccess(boardId, "VIEWER");
     }
 
-    const where: any = {};
+    const where: Prisma.ActivityWhereInput = {};
     if (organizationId) where.organizationId = organizationId;
     if (boardId) where.boardId = boardId;
     if (taskId) where.taskId = taskId;

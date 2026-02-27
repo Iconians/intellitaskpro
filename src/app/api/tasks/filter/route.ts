@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma, TaskStatus, TaskPriority } from "@prisma/client";
 import { requireBoardAccess } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { TaskStatus, TaskPriority } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
   try {
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 
     await requireBoardAccess(boardId, "VIEWER");
 
-    const where: any = {
+    const where: Prisma.TaskWhereInput = {
       boardId,
     };
 
@@ -35,14 +35,14 @@ export async function GET(request: NextRequest) {
     if (status) {
       const validStatuses = Object.values(TaskStatus);
       if (validStatuses.includes(status as TaskStatus)) {
-        where.status = status;
+        where.status = status as TaskStatus;
       }
     }
 
     if (priority) {
       const validPriorities = Object.values(TaskPriority);
       if (validPriorities.includes(priority as TaskPriority)) {
-        where.priority = priority;
+        where.priority = priority as TaskPriority;
       }
     }
 

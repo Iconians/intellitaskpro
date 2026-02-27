@@ -215,10 +215,10 @@ export function CreateTaskModal({
     },
   });
 
-  const handleTemplateSelect = (template: any) => {
+  const handleTemplateSelect = (template: { title: string; taskDescription?: string | null; priority: string; estimatedHours?: number | null }) => {
     setTitle(template.title);
     setDescription(template.taskDescription || "");
-    setPriority(template.priority);
+    setPriority(template.priority as TaskPriority);
     setEstimatedHours(template.estimatedHours?.toString() || "");
     // Note: Tags and checklist items would need to be handled separately
     // since they require API calls after task creation

@@ -53,6 +53,7 @@ export function EditTaskModal({
 
   useEffect(() => {
     if (task) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sync task from server to form state
       setDueDate(task.dueDate ? new Date(task.dueDate).toISOString().split("T")[0] : "");
       setEstimatedHours(task.estimatedHours?.toString() || "");
     }
@@ -88,6 +89,7 @@ export function EditTaskModal({
       const tagIds = taskTags
         .map((tt) => tt?.tag?.id)
         .filter((id): id is string => !!id);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sync loaded tags to form state
       setSelectedTagIds(tagIds);
     }
   }, [taskTags]);
@@ -158,6 +160,7 @@ export function EditTaskModal({
   });
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync external title/description to form state
     setTitle(currentTitle);
     setDescription(currentDescription ?? "");
   }, [currentTitle, currentDescription]);

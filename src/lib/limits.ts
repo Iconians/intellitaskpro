@@ -1,7 +1,15 @@
 import { prisma } from "./prisma";
 import { getActualCounts } from "./usage";
+import { isDeveloperOrganization } from "./developer";
 
 export async function getPlan(organizationId: string) {
+  if (isDeveloperOrganization(organizationId)) {
+    const enterprisePlan = await prisma.plan.findFirst({
+      where: { name: "Enterprise" },
+    });
+    if (enterprisePlan) return enterprisePlan;
+  }
+
   const subscription = await prisma.subscription.findUnique({
     where: { organizationId },
     include: {
