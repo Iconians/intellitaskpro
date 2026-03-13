@@ -36,23 +36,64 @@ IntelliTaskPro includes several capabilities typically required for real SaaS ap
 ## System Architecture
 
 ```mermaid
-flowchart TD
+flowchart TB
 
-A[Client Browser] --> B[Next.js App Router]
-B --> C[API Routes / Server Actions]
+subgraph Client
+A[Browser Client]
+end
 
-C --> D[Business Logic Layer]
+subgraph Application
+B[Next.js App Router]
+C[API Routes / Server Actions]
+end
 
-D --> E[(Neon PostgreSQL)]
-D --> F[Stripe Billing]
-D --> G[Pusher Realtime]
-D --> H[Redis + BullMQ Workers]
+subgraph Services
+D[Business Logic Layer]
+K[AI Service Abstraction]
+end
+
+subgraph Infrastructure
+E[(Neon PostgreSQL)]
+F[Stripe Billing]
+G[Pusher Realtime]
+H[Redis + BullMQ Workers]
+end
+
+A --> B
+B --> C
+C --> D
+
+D --> E
+D --> F
+D --> G
+D --> H
+
+C --> K
+K --> L[Gemini / Ollama / OpenAI]
 
 H --> I[Background Jobs]
 I --> J[Reminders / Automation]
+```
 
-C --> K[AI Services]
-K --> L[Google Gemini / Ollama / OpenAI]
+## Request Flow
+
+```mermaid
+sequenceDiagram
+participant User
+participant Browser
+participant NextJS
+participant API
+participant DB
+participant Stripe
+
+User->>Browser: Create board
+Browser->>NextJS: Submit request
+NextJS->>API: Validate request
+API->>DB: Store board
+API->>Stripe: Check plan limits
+DB-->>API: Success
+API-->>NextJS: Response
+NextJS-->>Browser: Update UI
 ```
 
 ## Deployment
