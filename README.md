@@ -484,6 +484,14 @@ Use **Google Gemini** - it's free (15 requests/minute), provides real AI capabil
 
 The system automatically falls back to demo mode if Gemini is unavailable, so it always works!
 
+## Architecture Decisions
+
+Key system design decisions are documented using Architecture Decision Records (ADR).
+
+See:
+
+docs/architecture/
+
 ## License
 
 MIT
