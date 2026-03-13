@@ -1,6 +1,140 @@
-# AI-Powered Project Management System
+![SaaS](https://img.shields.io/badge/Architecture-Multi--Tenant-blue)
+![Next.js](https://img.shields.io/badge/Next.js-16-black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-green)
+![Stripe](https://img.shields.io/badge/Billing-Stripe-purple)
+![AI](https://img.shields.io/badge/AI-Google%20Gemini-orange)
 
-A production-ready SaaS project management system built with Next.js, Neon PostgreSQL, Prisma, and AI integration. Features Kanban boards, AI task generation, real-time collaboration, Stripe billing, and board-level permissions.
+# IntelliTaskPro – AI-Powered Project Management SaaS
+
+A production-ready **multi-tenant project management platform** built with **Next.js, TypeScript, and Neon PostgreSQL**.
+
+The system supports **organization-based tenancy, role-based access control, Stripe subscription billing, AI-powered task generation, and real-time collaboration**.
+
+Designed using modern SaaS architecture patterns including **background workers, usage-based plan enforcement, and scalable API design**.
+
+## Live Application
+
+Production site: https://intellitaskpro.com
+
+IntelliTaskPro is a fully deployed SaaS platform where organizations can manage projects, collaborate in real time, and use AI-assisted planning tools.
+
+Users can create organizations, invite team members, manage boards, and subscribe to paid plans through Stripe.
+
+## Production Features
+
+IntelliTaskPro includes several capabilities typically required for real SaaS applications:
+
+• Multi-tenant organization architecture  
+• Stripe subscription billing and customer portal integration  
+• Usage-based plan enforcement  
+• Role-based access control across organizations and boards  
+• Background job processing with Redis and BullMQ  
+• Real-time collaboration using Pusher  
+• AI-assisted task planning and sprint generation  
+
+## System Architecture
+
+```mermaid
+flowchart TB
+
+subgraph Client
+A[Browser Client]
+end
+
+subgraph Application
+B[Next.js App Router]
+C[API Routes / Server Actions]
+end
+
+subgraph Services
+D[Business Logic Layer]
+K[AI Service Abstraction]
+end
+
+subgraph Infrastructure
+E[(Neon PostgreSQL)]
+F[Stripe Billing]
+G[Pusher Realtime]
+H[Redis + BullMQ Workers]
+end
+
+A --> B
+B --> C
+C --> D
+
+D --> E
+D --> F
+D --> G
+D --> H
+
+C --> K
+K --> L[Gemini / Ollama / OpenAI]
+
+H --> I[Background Jobs]
+I --> J[Reminders / Automation]
+```
+
+## Request Flow
+
+```mermaid
+sequenceDiagram
+participant User
+participant Browser
+participant NextJS
+participant API
+participant DB
+participant Stripe
+
+User->>Browser: Create board
+Browser->>NextJS: Submit request
+NextJS->>API: Validate request
+API->>DB: Store board
+API->>Stripe: Check plan limits
+DB-->>API: Success
+API-->>NextJS: Response
+NextJS-->>Browser: Update UI
+```
+
+## Deployment
+
+The application is deployed as a modern SaaS stack:
+
+Frontend / API:
+Next.js application deployed on Vercel
+
+Database:
+Neon PostgreSQL
+
+Billing:
+Stripe subscriptions and webhooks
+
+Background Jobs:
+Redis + BullMQ workers
+
+Real-time:
+Pusher event channels
+
+## Key SaaS Capabilities
+
+• Multi-tenant organizations with strict data isolation  
+• Role-based access control (ADMIN / MEMBER / VIEWER)  
+• Board-level permissions for granular collaboration  
+• Stripe subscription billing with plan enforcement  
+• Usage limits for boards, members, and tasks  
+• AI task generation and sprint planning  
+• Real-time board collaboration using Pusher  
+• Background workers for automation and reminders
+
+## Architecture Goals
+
+This project was designed around several core principles:
+
+• Clear tenant isolation between organizations  
+• Server-side data ownership to simplify client logic  
+• Relational schema design to enforce domain rules  
+• Event-driven workflows for background automation  
+• Flexible AI provider abstraction
 
 ## Features
 
@@ -16,16 +150,50 @@ A production-ready SaaS project management system built with Next.js, Neon Postg
 
 ## Tech Stack
 
-- **Frontend**: Next.js 16 (App Router), React 19, TypeScript
-- **Database**: Neon PostgreSQL with Prisma ORM
-- **Auth**: NextAuth.js v4 with Credentials provider
-- **Billing**: Stripe (subscriptions, checkout, customer portal, webhooks)
-- **Real-time**: Pusher (or polling fallback)
-- **AI**: Demo mode (free), Google Gemini (free tier), Ollama (local/free), or OpenAI/Anthropic (paid)
-- **State Management**: React Query, Zustand
-- **Drag & Drop**: @dnd-kit
-- **Styling**: Tailwind CSS
-- **Workers**: Node.js with BullMQ and Redis
+Frontend
+- Next.js (App Router)
+- React
+- TypeScript
+- Tailwind CSS
+
+Backend
+- Node.js
+- Prisma ORM
+- Neon PostgreSQL
+
+Infrastructure
+- Stripe (billing & subscriptions)
+- Pusher (real-time updates)
+- Redis + BullMQ (background workers)
+
+AI
+- Google Gemini
+- Ollama (local models)
+- OpenAI / Anthropic (optional)
+
+## Database Architecture
+
+The system uses a **multi-tenant relational schema** designed for organization isolation.
+
+Core entities:
+
+User → authentication and user accounts  
+Organizations → top-level tenant isolation  
+Teams → organizational groups  
+Members → user-role relationships within organizations  
+
+Project management:
+
+Boards → project boards  
+Tasks → individual work items  
+Sprints → time-boxed planning cycles  
+Comments → task discussion threads  
+
+SaaS infrastructure:
+
+Subscription → organization billing  
+Plan → plan limits and features  
+Usage → usage tracking and enforcement
 
 ## Getting Started
 
@@ -118,25 +286,6 @@ A production-ready SaaS project management system built with Next.js, Neon Postg
 └── prisma/
     └── schema.prisma     # Database schema
 ```
-
-## Database Schema
-
-The system uses a multi-tenant architecture with:
-- **User**: Authentication and user data
-- **Organizations**: Top-level tenant isolation
-- **Teams**: Groups within organizations
-- **Members**: User-organization-team relationships with roles (ADMIN, MEMBER, VIEWER)
-- **Boards**: Project boards (Kanban, Scrum, etc.)
-- **BoardMembers**: Board-level permissions (ADMIN, MEMBER, VIEWER) - explicit access control per board
-- **Sprints**: Time-boxed iterations
-- **Tasks**: Individual work items
-- **Comments**: Task discussions
-- **Attachments**: File references
-- **Subscription**: Organization subscription to a plan
-- **Plan**: Subscription plans (Free, Pro, Enterprise) with limits and features
-- **Usage**: Usage tracking for boards, members, and tasks
-- **AutomationRules**: Trigger-action automation
-- **Reminders**: Scheduled notifications
 
 ## API Routes
 
@@ -294,16 +443,6 @@ This project was migrated from Supabase to Neon. Key changes:
 - Auth: Supabase Auth → NextAuth.js
 - Realtime: Supabase Realtime → Pusher
 - Storage: Removed (not implemented)
-
-## SaaS Features
-
-This system is fully SaaS-ready with:
-- **Stripe Integration**: Complete billing, subscriptions, and payment processing
-- **Usage Limits**: Automatic enforcement of plan limits (boards, members, tasks)
-- **Plan Management**: Easy subscription upgrades/downgrades via Stripe
-- **Webhook Handling**: Real-time subscription status updates from Stripe
-- **Customer Portal**: Self-service subscription management
-- **Multi-tenancy**: Complete organization isolation with subscription per organization
 
 ## AI Configuration (Free Options for Portfolio)
 
