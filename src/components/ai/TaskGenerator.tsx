@@ -66,8 +66,9 @@ export function TaskGenerator({ boardId, onClose }: TaskGeneratorProps) {
         </div>
 
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-          Describe a feature, sprint goal, or development initiative and AI will break it down into
-          actionable tasks with priorities and time estimates. Best for planning features, APIs, refactors, and sprint work.
+          Describe bugs, a feature, or a rough goal. The AI breaks it down like a <strong>senior engineer</strong> would:
+          clear titles, scoped work, and descriptions that include context, approach, and how to verify—without generic
+          “code review” or DevOps filler unless that’s what you asked for.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -85,10 +86,10 @@ export function TaskGenerator({ boardId, onClose }: TaskGeneratorProps) {
               onChange={(e) => setDescription(e.target.value)}
               rows={8}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Examples: Add user authentication and profile API, implement checkout flow and payment integration, refactor legacy auth module, fix dashboard performance issues, ship settings page and email preferences..."
+              placeholder={`Examples:\n• Email bounce handling — 4 emails failed\n• Queue picks winning duo instead of next solo player\n• Matchmaking: confirm if win/loss based\n\nOr: “Add OAuth2 login and session refresh for the dashboard API…”`}
             />
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Be as detailed as possible for better task breakdown
+              Lists are read as separate issues; the model may merge obvious duplicates or split work when it makes sense.
             </p>
           </div>
 

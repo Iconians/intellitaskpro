@@ -220,7 +220,7 @@ export function BoardHeader({
 
   return (
     <>
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-2 xs:px-4 sm:px-6 lg:px-8 py-2 xs:py-3 sm:py-4">
+      <div className="shrink-0 border-b border-gray-200 bg-white px-2 py-2 xs:px-4 xs:py-3 sm:px-6 sm:py-4 lg:px-8 dark:border-gray-700 dark:bg-gray-800">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 xs:gap-3 sm:gap-4 mb-2 xs:mb-3 sm:mb-4">
           <div className="flex-1 min-w-0 w-full">
             {isEditingTitle &&
@@ -446,7 +446,7 @@ export function BoardHeader({
         </div>
 
         {onTabChange && (
-          <div className="flex gap-1 border-gray-200 dark:border-gray-700 overflow-x-auto -mx-2 xs:-mx-4 sm:-mx-6 lg:-mx-8 px-2 xs:px-4 sm:px-6 lg:px-8 scrollbar-hide">
+          <div className="-mx-2 flex gap-1 overflow-x-auto overflow-touch border-gray-200 px-2 scrollbar-hide xs:-mx-4 xs:px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 dark:border-gray-700 touch-pan-x">
             <button
               onClick={() => onTabChange("board")}
               className={`px-2 xs:px-3 sm:px-4 py-1.5 xs:py-2 font-medium text-xs sm:text-sm transition-colors whitespace-nowrap flex-shrink-0 ${
@@ -472,7 +472,7 @@ export function BoardHeader({
 
         {activeTab === "board" && (
           <div className="mt-4 space-y-2">
-            <div className="max-w-md">
+            <div className="w-full max-w-full sm:max-w-md">
               <TaskSearch
                 boardId={boardId}
                 onTaskSelect={(taskId) => {

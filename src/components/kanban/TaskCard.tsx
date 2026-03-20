@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
@@ -58,6 +58,9 @@ interface TaskCardProps {
   userBoardRole?: "ADMIN" | "MEMBER" | "VIEWER";
   isSelected?: boolean;
   onSelect?: () => void;
+  acquireBoardInteractionLock?: () => void;
+  releaseBoardInteractionLock?: () => void;
+  onClearBoardSelection?: () => void;
 }
 
 const priorityColors = {
@@ -75,11 +78,33 @@ export function TaskCard({
   userBoardRole,
   isSelected = false,
   onSelect,
+  acquireBoardInteractionLock,
+  releaseBoardInteractionLock,
+  onClearBoardSelection,
 }: TaskCardProps) {
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const queryClient = useQueryClient();
+
+  const taskModalOpen =
+    showAssignModal || showEditModal || showDetailModal;
+
+  useEffect(() => {
+    if (
+      !taskModalOpen ||
+      !acquireBoardInteractionLock ||
+      !releaseBoardInteractionLock
+    ) {
+      return;
+    }
+    acquireBoardInteractionLock();
+    return () => releaseBoardInteractionLock();
+  }, [
+    taskModalOpen,
+    acquireBoardInteractionLock,
+    releaseBoardInteractionLock,
+  ]);
 
   // Check if task is blocked by dependencies
   const { data: dependencies } = useQuery({
@@ -125,6 +150,7 @@ export function TaskCard({
 
   const handleAssigneeClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    onClearBoardSelection?.();
     setShowAssignModal(true);
   };
 
@@ -162,12 +188,14 @@ export function TaskCard({
 
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
+    onClearBoardSelection?.();
     setShowEditModal(true);
   };
 
   const handleViewDetails = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (organizationId) {
+      onClearBoardSelection?.();
       setShowDetailModal(true);
     }
   };

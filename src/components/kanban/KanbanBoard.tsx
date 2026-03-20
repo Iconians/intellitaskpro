@@ -12,7 +12,7 @@ import {
   rectIntersection,
 } from "@dnd-kit/core";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { KanbanColumn } from "./KanbanColumn";
 import { TaskCard } from "./TaskCard";
 import { useRealtime } from "@/hooks/useRealtime";
@@ -138,6 +138,17 @@ export function KanbanBoard({ boardId, organizationId, userBoardRole, filters = 
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set());
   const [showBulkEdit, setShowBulkEdit] = useState(false);
+  const [boardInteractionLockCount, setBoardInteractionLockCount] = useState(0);
+  const boardInteractionLocked = boardInteractionLockCount > 0;
+
+  const acquireBoardInteractionLock = useCallback(() => {
+    setBoardInteractionLockCount((c) => c + 1);
+  }, []);
+
+  const releaseBoardInteractionLock = useCallback(() => {
+    setBoardInteractionLockCount((c) => Math.max(0, c - 1));
+  }, []);
+
   const queryClient = useQueryClient();
 
   // Keyboard shortcuts
@@ -184,13 +195,13 @@ export function KanbanBoard({ boardId, organizationId, userBoardRole, filters = 
       activationConstraint: {
         distance: 8,
       },
-      disabled: isViewer,
+      disabled: isViewer || boardInteractionLocked,
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
         distance: 10,
       },
-      disabled: isViewer,
+      disabled: isViewer || boardInteractionLocked,
     })
   );
 
@@ -420,12 +431,14 @@ export function KanbanBoard({ boardId, organizationId, userBoardRole, filters = 
   };
 
   return (
-    <div className="h-full flex flex-col">
-      <RiskAlerts boardId={boardId} />
+    <div className="flex max-md:h-auto flex-col md:h-full md:min-h-0">
+      <div className="shrink-0">
+        <RiskAlerts boardId={boardId} />
+      </div>
       
       {/* Bulk Actions Toolbar */}
       {selectedTaskIds.size > 0 && !isViewer && (
-        <div className="bg-blue-600 text-white px-2 xs:px-3 sm:px-4 py-2 flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2 xs:gap-0">
+        <div className="shrink-0 bg-blue-600 text-white px-2 xs:px-3 sm:px-4 py-2 flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2 xs:gap-0">
           <span className="text-xs xs:text-sm font-medium">
             {selectedTaskIds.size} task{selectedTaskIds.size !== 1 ? "s" : ""} selected
           </span>
@@ -453,43 +466,53 @@ export function KanbanBoard({ boardId, organizationId, userBoardRole, filters = 
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex flex-col md:flex-row gap-2 xs:gap-3 sm:gap-4 p-1 xs:p-2 sm:p-4 overflow-y-auto md:overflow-x-auto md:overflow-y-visible flex-1 md:justify-start min-w-0 scrollbar-hide md:scrollbar-thin">
-        {sortedStatuses.map((status) => {
-          const columnTasks = filteredTasks
-            .filter((t) => t.status === status.status)
-            .sort((a, b) => a.order - b.order);
+        <div className="flex max-md:h-auto flex-col md:min-h-0 md:flex-1">
+          <div
+            className={`flex gap-2 p-1 pb-3 pt-1 scrollbar-thin xs:gap-3 xs:p-2 sm:p-4 max-md:flex-col max-md:overflow-x-hidden max-md:overflow-y-visible md:min-h-0 md:flex-1 md:flex-row md:flex-nowrap md:overflow-x-auto md:overflow-y-hidden md:overscroll-x-contain md:snap-x md:snap-mandatory md:overflow-touch md:touch-pan-x ${
+              boardInteractionLocked ? "pointer-events-none" : ""
+            }`}
+            {...(boardInteractionLocked ? { inert: true } : {})}
+          >
+            {sortedStatuses.map((status) => {
+              const columnTasks = filteredTasks
+                .filter((t) => t.status === status.status)
+                .sort((a, b) => a.order - b.order);
 
-          return (
-            <KanbanColumn
-              key={status.id}
-              id={status.id}
-              status={status}
-              tasks={columnTasks}
-              boardId={boardId}
-              organizationId={organizationId}
-              userBoardRole={userBoardRole}
-              selectedTaskIds={selectedTaskIds}
-              onTaskSelect={toggleTaskSelection}
-            />
-          );
-        })}
-      </div>
-      <DragOverlay>
-        {activeTask ? (
-          <TaskCard
-            task={activeTask}
-            isDragging
-            boardId={boardId}
-            organizationId={organizationId}
-            userBoardRole={userBoardRole}
+              return (
+                <KanbanColumn
+                  key={status.id}
+                  id={status.id}
+                  status={status}
+                  tasks={columnTasks}
+                  boardId={boardId}
+                  organizationId={organizationId}
+                  userBoardRole={userBoardRole}
+                  selectedTaskIds={selectedTaskIds}
+                  onTaskSelect={toggleTaskSelection}
+                  acquireBoardInteractionLock={acquireBoardInteractionLock}
+                  releaseBoardInteractionLock={releaseBoardInteractionLock}
+                  onClearBoardSelection={clearSelection}
+                />
+              );
+            })}
+          </div>
+          <DragOverlay>
+            {activeTask ? (
+              <TaskCard
+                task={activeTask}
+                isDragging
+                boardId={boardId}
+                organizationId={organizationId}
+                userBoardRole={userBoardRole}
+              />
+            ) : null}
+          </DragOverlay>
+
+          <ShortcutHelp
+            isOpen={showShortcuts}
+            onClose={() => setShowShortcuts(false)}
           />
-        ) : null}
-      </DragOverlay>
-
-        <ShortcutHelp
-          isOpen={showShortcuts}
-          onClose={() => setShowShortcuts(false)}
-        />
+        </div>
       </DndContext>
 
       {showBulkEdit && (

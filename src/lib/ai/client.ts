@@ -1,11 +1,34 @@
 import OpenAI from "openai";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { extractUserListItems } from "@/lib/ai/extract-list-items";
 
 export type AIProvider = "demo" | "gemini" | "ollama" | "openai" | "anthropic";
+
+/** Optional tuning for structured JSON-style outputs (e.g. task lists). */
+export type GenerateAIOptions = {
+  temperature?: number;
+};
 
 function generateDemoTasks(description: string) {
   const delay = (ms: number) =>
     new Promise((resolve) => setTimeout(resolve, ms));
+
+  const listItems = extractUserListItems(description);
+  if (listItems.length >= 2) {
+    return delay(1500).then(() =>
+      listItems.map((body) => ({
+        title: body.length > 140 ? `${body.slice(0, 137).trim()}…` : body,
+        description: `From backlog input:\n\n${body}\n\nScope: clarify current vs expected behavior, narrow to root cause, implement fix or change, add a check (test or manual verification) so it sticks.`,
+        priority: /urgent|crash|blocking|security|data loss/i.test(body)
+          ? "HIGH"
+          : "MEDIUM",
+        estimatedHours:
+          /refactor|several|multiple|complex|investigate|confirm/i.test(body)
+            ? 8
+            : 4,
+      }))
+    );
+  }
 
   const keywords = description.toLowerCase();
   const tasks: Array<{
@@ -173,7 +196,8 @@ function generateDemoTasks(description: string) {
 
 async function generateWithGemini(
   prompt: string,
-  systemPrompt?: string
+  systemPrompt?: string,
+  options?: GenerateAIOptions
 ): Promise<string> {
   if (!process.env.GOOGLE_GEMINI_API_KEY) {
     throw new Error(
@@ -205,7 +229,7 @@ async function generateWithGemini(
       const model = genAI.getGenerativeModel({
         model: modelName,
         generationConfig: {
-          temperature: 0.7,
+          temperature: options?.temperature ?? 0.7,
           topP: 0.8,
           topK: 40,
         },
@@ -273,7 +297,8 @@ async function generateWithGemini(
 
 async function generateWithOllama(
   prompt: string,
-  systemPrompt?: string
+  systemPrompt?: string,
+  options?: GenerateAIOptions
 ): Promise<string> {
   const rawOllamaUrl = process.env.OLLAMA_URL || "http://localhost:11434";
   let ollamaUrl: string;
@@ -318,6 +343,10 @@ async function generateWithOllama(
       model,
       prompt: fullPrompt,
       stream: false,
+      options:
+        options?.temperature != null
+          ? { temperature: options.temperature }
+          : undefined,
     }),
   });
 
@@ -331,7 +360,8 @@ async function generateWithOllama(
 
 async function generateWithOpenAI(
   prompt: string,
-  systemPrompt?: string
+  systemPrompt?: string,
+  options?: GenerateAIOptions
 ): Promise<string> {
   if (!process.env.OPENAI_API_KEY) {
     throw new Error("OPENAI_API_KEY is not set");
@@ -349,6 +379,7 @@ async function generateWithOpenAI(
         : []),
       { role: "user" as const, content: prompt },
     ],
+    ...(options?.temperature != null ? { temperature: options.temperature } : {}),
   });
 
   return response.choices[0]?.message?.content || "";
@@ -356,7 +387,8 @@ async function generateWithOpenAI(
 
 async function generateWithAnthropic(
   prompt: string,
-  systemPrompt?: string
+  systemPrompt?: string,
+  options?: GenerateAIOptions
 ): Promise<string> {
   if (!process.env.ANTHROPIC_API_KEY) {
     throw new Error("ANTHROPIC_API_KEY is not set");
@@ -372,6 +404,7 @@ async function generateWithAnthropic(
     max_tokens: 4096,
     messages: [{ role: "user", content: prompt }],
     ...(systemPrompt ? { system: systemPrompt } : {}),
+    ...(options?.temperature != null ? { temperature: options.temperature } : {}),
   });
 
   return response.content[0]?.type === "text" ? response.content[0].text : "";
@@ -380,23 +413,24 @@ async function generateWithAnthropic(
 export async function generateWithAI(
   provider: AIProvider,
   prompt: string,
-  systemPrompt?: string
+  systemPrompt?: string,
+  options?: GenerateAIOptions
 ): Promise<string> {
   switch (provider) {
     case "demo":
       return JSON.stringify(await generateDemoTasks(prompt));
 
     case "gemini":
-      return await generateWithGemini(prompt, systemPrompt);
+      return await generateWithGemini(prompt, systemPrompt, options);
 
     case "ollama":
-      return await generateWithOllama(prompt, systemPrompt);
+      return await generateWithOllama(prompt, systemPrompt, options);
 
     case "openai":
-      return await generateWithOpenAI(prompt, systemPrompt);
+      return await generateWithOpenAI(prompt, systemPrompt, options);
 
     case "anthropic":
-      return await generateWithAnthropic(prompt, systemPrompt);
+      return await generateWithAnthropic(prompt, systemPrompt, options);
 
     default:
       throw new Error(`Unknown AI provider: ${provider}`);

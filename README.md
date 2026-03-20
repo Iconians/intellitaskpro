@@ -21,9 +21,33 @@ IntelliTaskPro is a fully deployed SaaS platform where organizations can manage 
 
 Users can create organizations, invite team members, manage boards, and subscribe to paid plans through Stripe.
 
-## Production Features
+## Why This Project Exists
 
-IntelliTaskPro includes several capabilities typically required for real SaaS applications:
+Most project management tools are either overly complex or lack modern collaboration features.
+
+IntelliTaskPro was built to explore how a modern SaaS platform can combine:
+
+• multi-tenant architecture for organizations  
+• real-time collaboration between team members  
+• AI-assisted task generation and planning  
+• subscription billing with usage enforcement
+
+The goal was to design a **production-ready SaaS system** that demonstrates real engineering patterns used in modern web applications.
+
+This instantly answers: *Why was this built? What problem does it solve? What engineering ideas are being explored?*
+
+## What This Project Demonstrates
+
+This project explores several real-world engineering patterns:
+
+• Multi-tenant SaaS architecture  
+• Role-based access control systems  
+• Subscription billing and usage enforcement  
+• Background job processing with Redis workers  
+• Real-time collaboration using event broadcasting  
+• AI service abstraction for multiple providers
+
+### Core Capabilities
 
 • Multi-tenant organization architecture  
 • Stripe subscription billing and customer portal integration  
@@ -32,6 +56,38 @@ IntelliTaskPro includes several capabilities typically required for real SaaS ap
 • Background job processing with Redis and BullMQ  
 • Real-time collaboration using Pusher  
 • AI-assisted task planning and sprint generation  
+
+## Tech Stack
+
+Frontend
+- Next.js (App Router)
+- React
+- TypeScript
+- Tailwind CSS
+
+Backend
+- Node.js
+- Prisma ORM
+- Neon PostgreSQL
+
+Infrastructure
+- Stripe (billing & subscriptions)
+- Pusher (real-time updates)
+- Redis + BullMQ (background workers)
+
+AI
+- Google Gemini
+- Ollama (local models)
+- OpenAI / Anthropic (optional)
+
+## System Design Highlights
+
+• Multi-tenant relational schema  
+• Role-based access control (RBAC)  
+• Stripe subscription lifecycle management  
+• Background job processing architecture  
+• AI provider abstraction layer  
+• Real-time event broadcasting
 
 ## System Architecture
 
@@ -128,13 +184,26 @@ Pusher event channels
 
 ## Architecture Goals
 
-This project was designed around several core principles:
+The system was designed around several principles:
 
 • Clear tenant isolation between organizations  
-• Server-side data ownership to simplify client logic  
-• Relational schema design to enforce domain rules  
-• Event-driven workflows for background automation  
-• Flexible AI provider abstraction
+• Server-first architecture for business logic  
+• Relational schema modeling using PostgreSQL  
+• Scalable background job processing  
+• Flexible AI provider integration
+
+Now the project feels deliberately engineered.
+
+## Engineering Challenges
+
+Some of the technical challenges explored in this project include:
+
+• Designing multi-tenant database schemas  
+• Implementing role-based access control across organizations and boards  
+• Synchronizing Stripe subscription state with application logic  
+• Supporting multiple AI providers with a single abstraction layer
+
+Now the repo reads like engineering documentation.
 
 ## Features
 
@@ -147,29 +216,6 @@ This project was designed around several core principles:
 - **SaaS Ready**: Stripe billing, subscription management, usage limits, and plan enforcement
 - **Authentication**: NextAuth.js with email/password authentication
 - **Background Workers**: Automated reminders, automation rules, and cron jobs
-
-## Tech Stack
-
-Frontend
-- Next.js (App Router)
-- React
-- TypeScript
-- Tailwind CSS
-
-Backend
-- Node.js
-- Prisma ORM
-- Neon PostgreSQL
-
-Infrastructure
-- Stripe (billing & subscriptions)
-- Pusher (real-time updates)
-- Redis + BullMQ (background workers)
-
-AI
-- Google Gemini
-- Ollama (local models)
-- OpenAI / Anthropic (optional)
 
 ## Database Architecture
 
@@ -212,6 +258,11 @@ Usage → usage tracking and enforcement
 2. Install dependencies:
    ```bash
    bun install
+   ```
+
+   If a build warns that **`baseline-browser-mapping`** data is outdated, refresh it with Bun (not npm):
+   ```bash
+   bun add -d baseline-browser-mapping@latest && bun install
    ```
 
 3. Set up environment variables:

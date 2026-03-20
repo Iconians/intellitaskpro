@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { ModalPortal } from "../shared/ModalPortal";
 
 interface BoardMember {
   id: string;
@@ -85,8 +86,9 @@ export function AssignTaskModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+    <ModalPortal>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto select-text">
         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
           Assign Task
         </h2>
@@ -142,5 +144,6 @@ export function AssignTaskModal({
         )}
       </div>
     </div>
+    </ModalPortal>
   );
 }

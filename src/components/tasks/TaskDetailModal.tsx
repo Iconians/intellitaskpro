@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
+import { ModalPortal } from "../shared/ModalPortal";
 import { EditTaskModal } from "./EditTaskModal";
 import { TagSelector } from "./TagSelector";
 import { TaskChecklist } from "./TaskChecklist";
@@ -110,11 +111,13 @@ export function TaskDetailModal({
 
   if (isLoading) {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 xs:p-4">
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-3 xs:p-4 sm:p-6 max-w-2xl w-full mx-2 xs:mx-4 max-h-[95vh] overflow-y-auto">
-          <div className="text-center">Loading task...</div>
+      <ModalPortal>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-50 p-2 xs:p-4 pointer-events-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-3 xs:p-4 sm:p-6 max-w-2xl w-full mx-2 xs:mx-4 max-h-[95vh] overflow-y-auto">
+            <div className="text-center">Loading task...</div>
+          </div>
         </div>
-      </div>
+      </ModalPortal>
     );
   }
 
@@ -124,10 +127,20 @@ export function TaskDetailModal({
 
   const canEdit = userBoardRole === "ADMIN" || userBoardRole === "MEMBER";
 
+  const descriptionRows = task.description
+    ? Math.min(28, Math.max(5, task.description.split("\n").length + 2))
+    : 5;
+
+  const selectableSurfaceStyle: CSSProperties = {
+    userSelect: "text",
+    WebkitUserSelect: "text",
+  };
+
   return (
-    <>
+    <ModalPortal>
+      <>
       <div 
-        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto p-2 xs:p-4"
+        className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black bg-opacity-50 p-2 xs:p-4 pointer-events-auto"
         onClick={(e) => {
           // Close modal when clicking backdrop
           if (e.target === e.currentTarget) {
@@ -136,69 +149,76 @@ export function TaskDetailModal({
         }}
       >
         <div 
-          className="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full my-2 xs:my-4 sm:my-8 max-h-[95vh] xs:max-h-[90vh] overflow-y-auto mx-2 xs:mx-4"
+          className="mx-2 my-2 max-h-[95vh] w-full max-w-4xl select-text overflow-y-auto rounded-lg bg-white dark:bg-gray-800 xs:mx-4 xs:my-4 xs:max-h-[90vh] sm:my-8"
+          style={selectableSurfaceStyle}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Header */}
-          <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-2 xs:p-3 sm:p-4 flex flex-col xs:flex-row items-start xs:items-start justify-between gap-2 xs:gap-4 z-10">
-            <div className="flex-1 min-w-0 w-full xs:w-auto">
-              <h2 className="text-lg xs:text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2 break-words">
-                {task.title}
-              </h2>
-              <div className="flex items-center gap-1.5 xs:gap-2 flex-wrap">
-                <span className="text-xs px-1.5 xs:px-2 py-0.5 xs:py-1 rounded bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
-                  {task.status}
-                </span>
-                <span className="text-xs px-1.5 xs:px-2 py-0.5 xs:py-1 rounded bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200">
-                  {task.priority}
-                </span>
-                {task.assignee && (
-                  <span className="text-xs px-1.5 xs:px-2 py-0.5 xs:py-1 rounded bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 truncate max-w-[120px] xs:max-w-none">
-                    👤 {task.assignee.user?.name || task.assignee.user?.email}
+          {/* Header: outer strip ignores hits except title row + buttons so scrolled text can be selected */}
+          <div className="sticky top-0 z-10 border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 pointer-events-none">
+            <div className="flex flex-col items-start justify-between gap-2 p-2 xs:flex-row xs:items-start xs:gap-4 xs:p-3 sm:p-4">
+              <div className="pointer-events-auto min-w-0 w-full flex-1 xs:w-auto">
+                <h2 className="mb-2 break-words text-lg font-bold text-gray-900 dark:text-white xs:text-xl sm:text-2xl">
+                  {task.title}
+                </h2>
+                <div className="flex flex-wrap items-center gap-1.5 xs:gap-2">
+                  <span className="rounded bg-blue-100 px-1.5 py-0.5 text-xs text-blue-800 dark:bg-blue-900 dark:text-blue-200 xs:px-2 xs:py-1">
+                    {task.status}
                   </span>
-                )}
+                  <span className="rounded bg-orange-100 px-1.5 py-0.5 text-xs text-orange-800 dark:bg-orange-900 dark:text-orange-200 xs:px-2 xs:py-1">
+                    {task.priority}
+                  </span>
+                  {task.assignee && (
+                    <span className="max-w-[120px] truncate rounded bg-purple-100 px-1.5 py-0.5 text-xs text-purple-800 dark:bg-purple-900 dark:text-purple-200 xs:max-w-none xs:px-2 xs:py-1">
+                      👤 {task.assignee.user?.name || task.assignee.user?.email}
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
-            <div className="flex items-center gap-1 xs:gap-2 flex-shrink-0 w-full xs:w-auto justify-end">
-              {canEdit && (
-                <>
-                  <button
-                    onClick={() => {
-                      if (userIsWatching) {
-                        unwatchMutation.mutate();
-                      } else {
-                        watchMutation.mutate();
-                      }
-                    }}
-                    className="px-2 xs:px-3 py-1 text-xs xs:text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700 whitespace-nowrap"
-                    title={userIsWatching ? "Unwatch" : "Watch"}
-                  >
-                    <span className="hidden xs:inline">{userIsWatching ? "👁️ Watching" : "👁️ Watch"}</span>
-                    <span className="xs:hidden">👁️</span>
-                  </button>
-                  <button
-                    onClick={() => cloneMutation.mutate()}
-                    disabled={cloneMutation.isPending}
-                    className="px-2 xs:px-3 py-1 text-xs xs:text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 whitespace-nowrap"
-                    title="Clone task"
-                  >
-                    <span className="hidden xs:inline">📋 Clone</span>
-                    <span className="xs:hidden">📋</span>
-                  </button>
-                  <button
-                    onClick={() => setShowEditModal(true)}
-                    className="px-2 xs:px-3 py-1 text-xs xs:text-sm bg-blue-600 text-white rounded hover:bg-blue-700 whitespace-nowrap"
-                  >
-                    Edit
-                  </button>
-                </>
-              )}
-              <button
-                onClick={onClose}
-                className="px-2 xs:px-3 py-1 text-xs xs:text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
-              >
-                ✕
-              </button>
+              <div className="pointer-events-auto flex w-full flex-shrink-0 items-center justify-end gap-1 xs:w-auto xs:gap-2">
+                {canEdit && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (userIsWatching) {
+                          unwatchMutation.mutate();
+                        } else {
+                          watchMutation.mutate();
+                        }
+                      }}
+                      className="whitespace-nowrap rounded border border-gray-300 px-2 py-1 text-xs hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-700 xs:px-3 xs:text-sm"
+                      title={userIsWatching ? "Unwatch" : "Watch"}
+                    >
+                      <span className="hidden xs:inline">{userIsWatching ? "👁️ Watching" : "👁️ Watch"}</span>
+                      <span className="xs:hidden">👁️</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => cloneMutation.mutate()}
+                      disabled={cloneMutation.isPending}
+                      className="whitespace-nowrap rounded border border-gray-300 px-2 py-1 text-xs hover:bg-gray-100 disabled:opacity-50 dark:border-gray-600 dark:hover:bg-gray-700 xs:px-3 xs:text-sm"
+                      title="Clone task"
+                    >
+                      <span className="hidden xs:inline">📋 Clone</span>
+                      <span className="xs:hidden">📋</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowEditModal(true)}
+                      className="whitespace-nowrap rounded bg-blue-600 px-2 py-1 text-xs text-white hover:bg-blue-700 xs:px-3 xs:text-sm"
+                    >
+                      Edit
+                    </button>
+                  </>
+                )}
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-2 py-1 text-xs text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 xs:px-3 xs:text-sm"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
           </div>
 
@@ -230,9 +250,18 @@ export function TaskDetailModal({
                     <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Description
                     </h3>
-                    <p className="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">
-                      {task.description}
-                    </p>
+                    {/* readOnly textarea: reliable mouse drag-to-select (avoids sticky overlap + user-select quirks) */}
+                    <textarea
+                      readOnly
+                      aria-label="Task description"
+                      value={task.description}
+                      rows={descriptionRows}
+                      spellCheck={false}
+                      style={selectableSurfaceStyle}
+                      className="w-full min-h-[5rem] cursor-text resize-y rounded border-0 bg-transparent p-0 text-sm leading-relaxed text-gray-900 shadow-none outline-none ring-0 focus:ring-2 focus:ring-blue-500/40 dark:text-white"
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onMouseDown={(e) => e.stopPropagation()}
+                    />
                   </div>
                 )}
 
@@ -334,7 +363,8 @@ export function TaskDetailModal({
           }}
         />
       )}
-    </>
+      </>
+    </ModalPortal>
   );
 }
 
