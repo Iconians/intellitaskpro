@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { ModalPortal } from "../shared/ModalPortal";
 
 interface Tag {
   id: string;
@@ -196,8 +197,9 @@ export function EditTaskModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 xs:p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-3 xs:p-4 sm:p-6 max-w-md w-full mx-2 xs:mx-4 max-h-[95vh] xs:max-h-[90vh] overflow-y-auto">
+    <ModalPortal>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-2 xs:p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-3 xs:p-4 sm:p-6 max-w-md w-full mx-2 xs:mx-4 max-h-[95vh] xs:max-h-[90vh] overflow-y-auto select-text">
         <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">
           Edit Task
         </h2>
@@ -340,5 +342,6 @@ export function EditTaskModal({
         </form>
       </div>
     </div>
+    </ModalPortal>
   );
 }

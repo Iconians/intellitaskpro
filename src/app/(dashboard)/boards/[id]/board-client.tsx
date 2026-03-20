@@ -34,7 +34,7 @@ export function BoardPageClient({
   const [filters, setFilters] = useState<FilterState>({});
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
+    <div className="flex flex-col bg-gray-50 dark:bg-gray-900 max-md:max-h-[calc(100dvh-var(--navbar-height))] max-md:overflow-y-auto max-md:overflow-x-hidden md:h-[calc(100dvh-var(--navbar-height))] md:max-h-[calc(100dvh-var(--navbar-height))] md:min-h-0 md:overflow-hidden">
       <BoardHeader
         boardId={boardId}
         boardName={boardName}
@@ -46,7 +46,7 @@ export function BoardPageClient({
         filters={filters}
         onFiltersChange={setFilters}
       />
-      <div className="flex-1 overflow-hidden">
+      <div className="flex min-h-0 flex-col max-md:flex-none md:flex-1 md:overflow-hidden">
         {activeTab === "board" ? (
           <BoardViewSelector
             boardId={boardId}
@@ -55,7 +55,7 @@ export function BoardPageClient({
             filters={filters}
           />
         ) : (
-          <div className="h-full overflow-y-auto">
+          <div className="max-md:flex-none max-md:overflow-visible md:min-h-0 md:flex-1 md:overflow-y-auto overflow-touch">
             <SprintsView boardId={boardId} userBoardRole={userBoardRole} />
           </div>
         )}

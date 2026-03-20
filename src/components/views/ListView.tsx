@@ -155,10 +155,10 @@ export function ListView({
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="flex max-md:h-auto flex-col md:h-full md:min-h-0">
 
       {/* Table */}
-      <div className="flex-1 overflow-x-auto overflow-y-auto min-w-0">
+      <div className="min-w-0 overflow-x-auto overflow-y-auto overflow-touch max-md:max-h-none md:min-h-0 md:flex-1">
         <table className="w-full min-w-[640px]">
           <thead className="bg-gray-50 dark:bg-gray-900 sticky top-0">
             <tr>

@@ -8,6 +8,7 @@ import { pusherServer } from "@/lib/pusher";
 import { generateWithAI } from "@/lib/ai/client";
 import { TaskStatus } from "@prisma/client";
 import { syncTaskToGitHub } from "@/lib/github-sync";
+import { extractUserListItems } from "@/lib/ai/extract-list-items";
 
 export async function POST(request: NextRequest) {
   try {
@@ -59,56 +60,59 @@ export async function POST(request: NextRequest) {
     
     await requireBoardAccess(boardId, "MEMBER");
 
-    const systemPrompt = `You are a development project management assistant. Given a feature, sprint goal, or development initiative, break it down into actionable engineering tasks.
+    const listItems = extractUserListItems(description);
+    const listContext =
+      listItems.length >= 2
+        ? `\n\nContext: The input looks like ${listItems.length} distinct list entries (bullets or numbered lines). A senior engineer would make sure each real issue or ask is owned by a task—usually one task per entry, same rough order. Merge only if two lines are clearly duplicates; split an entry into two tasks only when it genuinely needs separate workstreams (e.g. backend vs email pipeline). Do not drop a substantive item.\n`
+        : "";
 
-Focus on software development work:
-- Features, user stories, and technical specs
-- Backend APIs, frontend components, and integrations
-- Testing, code review, and deployment
-- Bug fixes, refactors, and tech debt
+    const systemPrompt = `You write task breakdowns the way a strong senior/staff engineer would before a sprint: practical, shippable, and easy for teammates to pick up.
 
-Return a JSON array of tasks, each with:
-- title: Clear, concise task title (development-focused)
-- description: Detailed description of what needs to be done
-- priority: One of LOW, MEDIUM, HIGH, URGENT
-- estimatedHours: Estimated hours to complete (number)
+How to think:
+- **Scope & granularity**: Decompose until each task is something one person could drive to done in a reasonable slice. Not micro-tickets (unless the input is already tiny), not vague epics. Prefer vertical slices when the work is feature-shaped; prefer clear repro → fix → verify when it’s bug-shaped.
+- **Titles**: Specific and action-oriented, like you’d use in Jira/Linear—read standalone and signal the real work (“Fix queue prioritization after match end” not “Fix bug” or “Work on queue”).
+- **Descriptions**: Short but senior: current behavior or gap, intended outcome, key technical angles to check, how you’ll know it’s done (acceptance / verification). Call out ambiguities or open questions in-line if the input is fuzzy—don’t invent product decisions; note what needs clarification.
+- **Grounding**: Every task must trace to the user’s input. Don’t substitute a generic “sprint template” (standalone code-review-only, CI/CD, or doc tasks) unless the user’s text is clearly asking for that deliverable.
+- **Priority & hours**: Use judgment—customer impact, risk, and uncertainty. URGENT only for real outages, security, or hard blockers.
 
-Example:
+Output ONLY valid JSON: an array of objects with keys:
+- title (string)
+- description (string)
+- priority: one of LOW, MEDIUM, HIGH, URGENT
+- estimatedHours (number)
+
+Example (bug list style, senior tone):
 [
   {
-    "title": "Add user authentication endpoint",
-    "description": "Implement POST /auth/login and /auth/register with JWT; add password hashing and validation",
+    "title": "Correct post-match queue: next solo waiter, not winning duo",
+    "description": "Repro: when a game ends, queue logic advances the winning pair into the next match instead of the next individual in the solo queue. Trace matchmaking/queue state transitions after game completion; align behavior with product rule (solo FIFO vs duo). Add regression test or integration check so this can’t slip again.",
     "priority": "HIGH",
-    "estimatedHours": 8
+    "estimatedHours": 6
   },
   {
-    "title": "Write integration tests for auth",
-    "description": "Cover login, register, token refresh, and error cases",
+    "title": "Define and validate behavior for \"you're up next\" notification timing",
+    "description": "Stakeholders unclear when emails fire relative to game state. Trace send path (job vs inline), document actual timing, fix if it violates expected UX, and add logging or metrics if gaps remain.",
     "priority": "MEDIUM",
     "estimatedHours": 4
-  },
-  {
-    "title": "Update API documentation",
-    "description": "Document new auth endpoints in OpenAPI spec",
-    "priority": "LOW",
-    "estimatedHours": 2
   }
 ]`;
 
-    const userPrompt = `Break down the following project into actionable tasks:\n\n${description}`;
+    const userPrompt = `${listContext}USER INPUT (source of truth—interpret like you’re breaking down your own team’s backlog):\n---\n${description}\n---\n\nReturn the JSON array now.`;
 
     let aiResponse: string;
     try {
       aiResponse = await generateWithAI(
         provider as "demo" | "gemini" | "ollama" | "openai" | "anthropic",
         userPrompt,
-        systemPrompt
+        systemPrompt,
+        { temperature: 0.32 }
       );
     } catch (error) {
       
       console.error("AI generation failed, falling back to demo mode:", error);
       try {
-        aiResponse = await generateWithAI("demo", userPrompt, systemPrompt);
+        // Demo parser expects raw user text (bullets/keywords), not the wrapped prompt
+        aiResponse = await generateWithAI("demo", description, systemPrompt);
       } catch (_fallbackError) {
         return NextResponse.json(
           {

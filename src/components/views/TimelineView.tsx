@@ -84,7 +84,7 @@ export function TimelineView({
   };
 
   return (
-    <div className="h-full flex flex-col p-4">
+    <div className="flex max-md:h-auto flex-col p-4 md:h-full md:min-h-0">
       {/* Controls */}
       <div className="mb-4 flex items-center gap-4">
         <div>

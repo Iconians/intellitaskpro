@@ -2,9 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  .overflow-touch {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  /* Matches Navbar inner row (h-16) for below-the-nav layouts */
+  --navbar-height: 4rem;
 }
 
 .dark {

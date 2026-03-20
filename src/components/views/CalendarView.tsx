@@ -106,7 +106,7 @@ export function CalendarView({
   const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   return (
-    <div className="h-full flex flex-col p-4">
+    <div className="flex max-md:h-auto flex-col p-4 md:h-full md:min-h-0">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-4">

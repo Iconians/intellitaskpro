@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -46,6 +46,9 @@ interface KanbanColumnProps {
   userBoardRole?: "ADMIN" | "MEMBER" | "VIEWER";
   selectedTaskIds?: Set<string>;
   onTaskSelect?: (taskId: string) => void;
+  acquireBoardInteractionLock?: () => void;
+  releaseBoardInteractionLock?: () => void;
+  onClearBoardSelection?: () => void;
 }
 
 export function KanbanColumn({
@@ -57,18 +60,33 @@ export function KanbanColumn({
   userBoardRole,
   selectedTaskIds = new Set(),
   onTaskSelect,
+  acquireBoardInteractionLock,
+  releaseBoardInteractionLock,
+  onClearBoardSelection,
 }: KanbanColumnProps) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const { setNodeRef, isOver } = useDroppable({
     id,
   });
 
+  useEffect(() => {
+    if (!showCreateModal || !acquireBoardInteractionLock || !releaseBoardInteractionLock) {
+      return;
+    }
+    acquireBoardInteractionLock();
+    return () => releaseBoardInteractionLock();
+  }, [
+    showCreateModal,
+    acquireBoardInteractionLock,
+    releaseBoardInteractionLock,
+  ]);
+
   return (
     <>
       <div
         ref={setNodeRef}
-        className={`flex-shrink-0 w-full xs:w-[280px] sm:w-[300px] md:w-80 bg-gray-100 dark:bg-gray-800 rounded-lg p-2 xs:p-3 sm:p-4 flex flex-col min-w-0 ${
-          isOver ? "ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20" : ""
+        className={`flex w-full shrink-0 flex-col rounded-lg bg-gray-100 p-2 xs:p-3 sm:p-4 max-md:h-auto max-md:min-h-0 md:h-full md:max-h-full md:w-80 md:shrink-0 md:snap-center md:[scroll-snap-align:none] dark:bg-gray-800 ${
+          isOver ? "bg-blue-50 ring-2 ring-blue-500 dark:bg-blue-900/20" : ""
         }`}
       >
         <div className="flex items-center justify-between mb-3 sm:mb-4">
@@ -89,7 +107,7 @@ export function KanbanColumn({
           strategy={verticalListSortingStrategy}
         >
           <div
-            className="space-y-2 max-h-[80vh] overflow-y-auto flex-1 scroll-smooth scrollbar-thin"
+            className="space-y-2 max-md:overflow-visible md:min-h-0 md:flex-1 md:overflow-y-auto md:max-h-[min(80vh,36rem)] overflow-touch scroll-smooth scrollbar-thin"
             style={{ touchAction: "pan-y" }}
           >
             {tasks.map((task) => (
@@ -101,6 +119,9 @@ export function KanbanColumn({
                 userBoardRole={userBoardRole}
                 isSelected={selectedTaskIds.has(task.id)}
                 onSelect={onTaskSelect ? () => onTaskSelect(task.id) : undefined}
+                acquireBoardInteractionLock={acquireBoardInteractionLock}
+                releaseBoardInteractionLock={releaseBoardInteractionLock}
+                onClearBoardSelection={onClearBoardSelection}
               />
             ))}
             {tasks.length === 0 && (
