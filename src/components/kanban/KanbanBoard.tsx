@@ -431,7 +431,7 @@ export function KanbanBoard({ boardId, organizationId, userBoardRole, filters = 
   };
 
   return (
-    <div className="flex max-md:h-auto flex-col md:h-full md:min-h-0">
+    <div className="flex w-full max-md:h-auto flex-col md:min-h-0">
       <div className="shrink-0">
         <RiskAlerts boardId={boardId} />
       </div>
@@ -466,9 +466,9 @@ export function KanbanBoard({ boardId, organizationId, userBoardRole, filters = 
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex max-md:h-auto flex-col md:min-h-0 md:flex-1">
+        <div className="flex max-md:h-auto flex-col md:min-h-0">
           <div
-            className={`flex gap-2 p-1 pb-3 pt-1 scrollbar-thin xs:gap-3 xs:p-2 sm:p-4 max-md:flex-col max-md:overflow-x-hidden max-md:overflow-y-visible md:min-h-0 md:flex-1 md:flex-row md:flex-nowrap md:overflow-x-auto md:overflow-y-hidden md:overscroll-x-contain md:snap-x md:snap-mandatory md:overflow-touch md:touch-pan-x ${
+            className={`flex gap-2 p-1 pb-3 pt-1 scrollbar-thin xs:gap-3 xs:p-2 sm:p-4 max-md:flex-col max-md:overflow-x-hidden max-md:overflow-y-visible md:min-h-0 md:flex-row md:flex-nowrap md:overflow-x-auto md:overflow-y-hidden md:overscroll-x-contain md:snap-x md:snap-mandatory md:overflow-touch md:touch-pan-x ${
               boardInteractionLocked ? "pointer-events-none" : ""
             }`}
             {...(boardInteractionLocked ? { inert: true } : {})}

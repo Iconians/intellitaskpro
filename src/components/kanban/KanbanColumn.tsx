@@ -85,7 +85,7 @@ export function KanbanColumn({
     <>
       <div
         ref={setNodeRef}
-        className={`flex w-full shrink-0 flex-col rounded-lg bg-gray-100 p-2 xs:p-3 sm:p-4 max-md:h-auto max-md:min-h-0 md:h-full md:max-h-full md:w-80 md:shrink-0 md:snap-center md:[scroll-snap-align:none] dark:bg-gray-800 ${
+        className={`flex w-full shrink-0 flex-col rounded-lg bg-gray-100 p-2 xs:p-3 sm:p-4 max-md:h-auto max-md:min-h-0 md:h-full md:min-h-[550px] md:max-h-full md:w-80 md:shrink-0 md:snap-center md:[scroll-snap-align:none] dark:bg-gray-800 ${
           isOver ? "bg-blue-50 ring-2 ring-blue-500 dark:bg-blue-900/20" : ""
         }`}
       >

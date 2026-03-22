@@ -84,7 +84,7 @@ export function TimelineView({
   };
 
   return (
-    <div className="flex max-md:h-auto flex-col p-4 md:h-full md:min-h-0">
+    <div className="flex w-full max-md:h-auto flex-col p-4 md:min-h-0">
       {/* Controls */}
       <div className="mb-4 flex items-center gap-4">
         <div>
@@ -112,7 +112,7 @@ export function TimelineView({
       </div>
 
       {/* Timeline */}
-      <div className="flex-1 overflow-auto">
+      <div className="max-h-[min(70vh,40rem)] overflow-auto">
         <div className="relative min-h-96">
           {/* Date headers */}
           <div className="sticky top-0 bg-white dark:bg-gray-800 z-10 border-b border-gray-200 dark:border-gray-700">

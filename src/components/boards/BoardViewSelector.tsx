@@ -41,7 +41,7 @@ export function BoardViewSelector({
   ];
 
   return (
-    <div className="flex flex-col md:h-full md:min-h-0">
+    <div className="flex w-full flex-col">
       {/* View Selector */}
       <div className="shrink-0 overflow-x-auto overflow-touch border-b border-gray-200 bg-white px-2 py-2 scrollbar-hide touch-pan-x xs:px-3 sm:px-4 dark:border-gray-700 dark:bg-gray-800">
         <div className="flex min-w-max gap-1 xs:gap-2">
@@ -63,7 +63,7 @@ export function BoardViewSelector({
       </div>
 
       {/* View Content */}
-      <div className="flex flex-col max-md:flex-none md:min-h-0 md:flex-1 md:overflow-hidden">
+      <div className="flex w-full flex-col max-md:overflow-visible md:overflow-x-hidden md:overflow-y-visible">
         {currentView === "kanban" && (
           <KanbanBoard
             boardId={boardId}
