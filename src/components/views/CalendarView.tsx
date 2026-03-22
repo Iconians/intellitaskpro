@@ -106,7 +106,7 @@ export function CalendarView({
   const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   return (
-    <div className="flex max-md:h-auto flex-col p-4 md:h-full md:min-h-0">
+    <div className="flex w-full max-md:h-auto flex-col p-4 md:min-h-0">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-4">
@@ -157,7 +157,7 @@ export function CalendarView({
       </div>
 
       {/* Calendar Grid */}
-      <div className="flex-1 overflow-auto">
+      <div className="max-h-[min(70vh,40rem)] overflow-auto">
         <div className="grid grid-cols-7 gap-0.5 xs:gap-1">
           {/* Day headers */}
           {dayNames.map((day) => (

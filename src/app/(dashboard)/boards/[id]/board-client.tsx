@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { BoardViewSelector } from "@/components/boards/BoardViewSelector";
 import { BoardHeader } from "@/components/boards/BoardHeader";
+import { BoardPageFooter } from "@/components/boards/BoardPageFooter";
 import { SprintsView } from "@/components/sprints/SprintsView";
 
 interface FilterState {
@@ -34,7 +35,7 @@ export function BoardPageClient({
   const [filters, setFilters] = useState<FilterState>({});
 
   return (
-    <div className="flex flex-col bg-gray-50 dark:bg-gray-900 max-md:max-h-[calc(100dvh-var(--navbar-height))] max-md:overflow-y-auto max-md:overflow-x-hidden md:h-[calc(100dvh-var(--navbar-height))] md:max-h-[calc(100dvh-var(--navbar-height))] md:min-h-0 md:overflow-hidden">
+    <div className="flex min-h-0 flex-col overflow-y-auto overflow-x-hidden overflow-touch bg-gray-50 dark:bg-gray-900 max-h-[calc(100dvh-var(--navbar-height))]">
       <BoardHeader
         boardId={boardId}
         boardName={boardName}
@@ -46,20 +47,23 @@ export function BoardPageClient({
         filters={filters}
         onFiltersChange={setFilters}
       />
-      <div className="flex min-h-0 flex-col max-md:flex-none md:flex-1 md:overflow-hidden">
-        {activeTab === "board" ? (
+      {activeTab === "board" ? (
+        <div className="flex w-full shrink-0 flex-col min-h-[min(58dvh,560px)] md:min-h-[min(64dvh,720px)]">
           <BoardViewSelector
             boardId={boardId}
             organizationId={organizationId}
             userBoardRole={userBoardRole}
             filters={filters}
           />
-        ) : (
-          <div className="max-md:flex-none max-md:overflow-visible md:min-h-0 md:flex-1 md:overflow-y-auto overflow-touch">
+        </div>
+      ) : (
+        <div className="flex min-h-[min(40dvh,360px)] flex-1 flex-col md:min-h-0">
+          <div className="min-h-0 flex-1 overflow-y-auto overflow-touch">
             <SprintsView boardId={boardId} userBoardRole={userBoardRole} />
           </div>
-        )}
-      </div>
+        </div>
+      )}
+      <BoardPageFooter />
     </div>
   );
 }
