@@ -155,9 +155,9 @@ export function TaskDetailModal({
         >
           {/* Header: outer strip ignores hits except title row + buttons so scrolled text can be selected */}
           <div className="sticky top-0 z-10 border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 pointer-events-none">
-            <div className="flex flex-col items-start justify-between gap-2 p-2 xs:flex-row xs:items-start xs:gap-4 xs:p-3 sm:p-4">
-              <div className="pointer-events-auto min-w-0 w-full flex-1 xs:w-auto">
-                <h2 className="mb-2 break-words text-lg font-bold text-gray-900 dark:text-white xs:text-xl sm:text-2xl">
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] grid-rows-[auto_auto] gap-x-2 gap-y-3 p-2 xs:p-3 sm:p-4 min-[801px]:grid-cols-[minmax(0,1fr)_auto_auto] min-[801px]:grid-rows-1 min-[801px]:items-start min-[801px]:gap-x-4 min-[801px]:gap-y-0">
+              <div className="pointer-events-auto col-start-1 row-start-1 min-w-0">
+                <h2 className="mb-2 w-full break-words text-lg font-bold text-gray-900 dark:text-white xs:text-xl sm:text-2xl">
                   {task.title}
                 </h2>
                 <div className="flex flex-wrap items-center gap-1.5 xs:gap-2">
@@ -174,51 +174,49 @@ export function TaskDetailModal({
                   )}
                 </div>
               </div>
-              <div className="pointer-events-auto flex w-full flex-shrink-0 items-center justify-end gap-1 xs:w-auto xs:gap-2">
-                {canEdit && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (userIsWatching) {
-                          unwatchMutation.mutate();
-                        } else {
-                          watchMutation.mutate();
-                        }
-                      }}
-                      className="whitespace-nowrap rounded border border-gray-300 px-2 py-1 text-xs hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-700 xs:px-3 xs:text-sm"
-                      title={userIsWatching ? "Unwatch" : "Watch"}
-                    >
-                      <span className="hidden xs:inline">{userIsWatching ? "👁️ Watching" : "👁️ Watch"}</span>
-                      <span className="xs:hidden">👁️</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => cloneMutation.mutate()}
-                      disabled={cloneMutation.isPending}
-                      className="whitespace-nowrap rounded border border-gray-300 px-2 py-1 text-xs hover:bg-gray-100 disabled:opacity-50 dark:border-gray-600 dark:hover:bg-gray-700 xs:px-3 xs:text-sm"
-                      title="Clone task"
-                    >
-                      <span className="hidden xs:inline">📋 Clone</span>
-                      <span className="xs:hidden">📋</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowEditModal(true)}
-                      className="whitespace-nowrap rounded bg-blue-600 px-2 py-1 text-xs text-white hover:bg-blue-700 xs:px-3 xs:text-sm"
-                    >
-                      Edit
-                    </button>
-                  </>
-                )}
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-2 py-1 text-xs text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 xs:px-3 xs:text-sm"
-                >
-                  ✕
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={onClose}
+                className="pointer-events-auto col-start-2 row-start-1 self-start justify-self-end px-2 py-1 text-xs text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 xs:px-3 xs:text-sm min-[801px]:col-start-3"
+              >
+                ✕
+              </button>
+              {canEdit && (
+                <div className="pointer-events-auto col-span-2 row-start-2 flex flex-wrap items-center gap-2 min-[801px]:col-span-1 min-[801px]:col-start-2 min-[801px]:row-start-1 min-[801px]:flex-nowrap">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (userIsWatching) {
+                        unwatchMutation.mutate();
+                      } else {
+                        watchMutation.mutate();
+                      }
+                    }}
+                    className="whitespace-nowrap rounded border border-gray-300 px-2 py-1 text-xs hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-700 xs:px-3 xs:text-sm"
+                    title={userIsWatching ? "Unwatch" : "Watch"}
+                  >
+                    <span className="hidden xs:inline">{userIsWatching ? "👁️ Watching" : "👁️ Watch"}</span>
+                    <span className="xs:hidden">👁️</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => cloneMutation.mutate()}
+                    disabled={cloneMutation.isPending}
+                    className="whitespace-nowrap rounded border border-gray-300 px-2 py-1 text-xs hover:bg-gray-100 disabled:opacity-50 dark:border-gray-600 dark:hover:bg-gray-700 xs:px-3 xs:text-sm"
+                    title="Clone task"
+                  >
+                    <span className="hidden xs:inline">📋 Clone</span>
+                    <span className="xs:hidden">📋</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowEditModal(true)}
+                    className="whitespace-nowrap rounded bg-blue-600 px-2 py-1 text-xs text-white hover:bg-blue-700 xs:px-3 xs:text-sm"
+                  >
+                    Edit
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
