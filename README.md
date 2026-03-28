@@ -260,10 +260,7 @@ Usage → usage tracking and enforcement
    bun install
    ```
 
-   If a build warns that **`baseline-browser-mapping`** data is outdated, refresh it with Bun (not npm):
-   ```bash
-   bun add -d baseline-browser-mapping@latest && bun install
-   ```
+   If a build warns that **`baseline-browser-mapping`** data is outdated, bump the version under `"overrides"` in `package.json` and run `bun install` (or `npm install`). Do not list it as a direct `devDependency` at the same time—npm on Vercel fails with **EOVERRIDE**.
 
 3. Set up environment variables:
    ```bash
