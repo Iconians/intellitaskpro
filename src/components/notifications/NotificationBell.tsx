@@ -76,7 +76,9 @@ export function NotificationBell() {
             className="fixed inset-0 z-40"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] xs:w-80 max-w-[calc(100vw-2rem)] xs:max-w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 max-h-96 overflow-y-auto">
+          <div
+            className="fixed left-1/2 top-16 z-50 mt-2 w-[calc(100vw-1rem)] max-w-md -translate-x-1/2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 max-h-[min(24rem,calc(100dvh-5rem))] overflow-y-auto md:absolute md:left-auto md:right-0 md:top-full md:mt-2 md:w-80 md:max-w-80 md:translate-x-0"
+          >
             <div className="p-4 border-b border-gray-200 dark:border-gray-700">
               <h3 className="font-semibold text-gray-900 dark:text-white">
                 Notifications
