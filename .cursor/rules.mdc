@@ -1,0 +1,191 @@
+---
+alwaysApply: true
+description: >
+  These rules are strict and must be followed when generating or modifying code.
+  If a request conflicts with these rules, follow the rules.
+---
+
+# Project Rules (rules.mdc)
+
+## Rule Priority Order
+
+1. Readability
+2. Separation of concerns
+3. Simplicity
+4. Consistency
+5. Performance (only when needed)
+
+---
+
+## Core Principles
+
+* Code must be readable within 30 seconds
+* Favor simplicity over cleverness
+* Every file should have a single responsibility
+* If a file exceeds 200 lines, refactor it
+* Prefer smaller files (50–150 lines ideal)
+
+---
+
+## Project Structure (Next.js 13+/16+ compatible)
+
+### Frontend (Routes & Pages)
+
+* All route-level components, layouts, and API routes live in `app/` or `src/app/`
+* Keep `page.tsx`, layout, and thin client components here
+* Avoid placing reusable components directly in the route folder — they belong in `components/` or `src/components/`
+
+### Shared UI Components
+
+* `components/` or `src/components/` holds all reusable UI components
+* Organize by domain (e.g., `boards/`, `tasks/`, `kanban/`)
+* Components should be single-purpose and under 100 lines
+
+### Backend / Services
+
+* `lib/` or `src/lib/` holds business logic, database adapters, utilities, and API helpers
+* Optional: `server/services/` or `src/server/services/` if you want clearer separation
+* Avoid placing server logic in the route folder (except thin API route handlers)
+
+### Hooks
+
+* `hooks/` or `src/hooks/` contains reusable client logic (`useX`)
+* Hooks should be under 100–150 lines and single-purpose
+
+---
+
+## Component Rules
+
+* Components must be single-purpose and under 100 lines
+* Extract subcomponents early (don’t wait until large files)
+* No deeply nested JSX (max 2–3 levels)
+* Move logic out of components into hooks or services
+
+---
+
+## Hooks & Logic
+
+* Reusable logic must be extracted into hooks (`useX`)
+* No business logic directly inside UI components
+* Hooks should not exceed 100–150 lines
+
+---
+
+## Data & API
+
+* No direct database or external calls from frontend components
+* All data fetching must go through a defined layer (API routes or backend services)
+* Do not mix fetching logic with UI rendering
+
+---
+
+## Naming Conventions
+
+* Files: kebab-case or PascalCase (be consistent)
+* Components: PascalCase
+* Hooks: useCamelCase (must start with "use")
+* Functions: camelCase
+* Avoid vague names like `data`, `stuff`, `handler`
+
+---
+
+## Imports
+
+* Use absolute imports when possible
+* Avoid deeply nested relative paths (../../../../)
+* Group imports in order:
+
+  1. External libraries
+  2. Internal modules
+  3. Styles/types
+
+---
+
+## Error Handling
+
+* Do not silently fail
+* Always handle async errors
+* Surface meaningful error messages
+
+---
+
+## Comments
+
+* Do NOT add obvious comments
+* Only explain "why", not "what"
+* Keep comments minimal and high value
+
+---
+
+## File Creation Rules
+
+* Do NOT create new .md files unless explicitly approved
+* Do NOT introduce new folders without justification
+
+---
+
+## Refactoring Expectations
+
+* If touching messy code, improve it slightly
+* Leave files better than you found them
+* Break large components into smaller ones during edits
+
+---
+
+## Decision Rules (Enforced)
+
+* If logic is reused in 2+ places → extract a hook or shared function
+* If logic involves data transformation, validation, or business rules → move to backend/service (`lib/` or `server/services/`)
+* If a component exceeds 100 lines → split into smaller components
+* If a component has more than 3 responsibilities → split immediately
+* If state management becomes complex → extract into a hook
+* If a function is longer than 30–40 lines → refactor into smaller functions
+
+---
+
+## Code Smell Detection (Refactor Triggers)
+
+* If you need to scroll more than 2 screens → refactor the file
+* If a variable or function name requires explanation → rename it
+* If a file does more than one clear responsibility → split it
+* If logic is duplicated → extract it
+* If a component mixes UI + business logic → separate concerns
+* If props are passed down more than 2 levels (prop drilling) → rethink structure (context or state)
+* If a file is hard to explain in 1–2 sentences → it’s too complex
+
+---
+
+## PR Readability Standard
+
+* A reviewer should understand:
+
+  * What was changed
+  * Where logic lives
+  * How data flows
+
+* If this is unclear, the PR is not ready
+
+---
+
+## PR Self-Check (Before Submitting)
+
+* Can another developer find where logic lives in under 30 seconds?
+* Are components small and focused?
+* Is business logic separated from UI?
+* Are names clear without needing comments?
+* Did I improve any messy code I touched?
+
+If any answer is “no” → refactor before submitting
+
+---
+
+## Anti-Patterns (Avoid These)
+
+* ❌ 300+ line components
+* ❌ Business logic in UI components
+* ❌ Mixing concerns in one file
+* ❌ Massive utility files doing everything
+* ❌ Unnamed or unclear abstractions
+* ❌ Copy-pasting logic instead of reusing hooks/services
+
+---
