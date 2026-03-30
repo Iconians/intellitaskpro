@@ -61,10 +61,33 @@ description: >
 * Extract subcomponents early (don’t wait until large files)
 * No deeply nested JSX (max 2–3 levels)
 * Move logic out of components into hooks or services
-* page.tsx components should always be server components
-* prefer server components over client components
 
 ---
+
+## Server vs Client Components
+
+* `page.tsx` must be a Server Component by default (no `"use client"`)
+* Prefer Server Components over Client Components whenever possible
+* Only use Client Components when interactivity is required (state, effects, event handlers)
+* If a component needs state or effects → isolate that logic into a small client component
+
+### Client Component Usage
+
+* Client Components must be small and isolated
+* Do NOT make entire pages or large sections client components
+* Keep client logic (state, `useEffect`, event handlers) contained to small components or hooks
+* Wrap interactive UI in small client components and import them into Server Components
+
+### Data & Rendering
+
+* Fetch data in Server Components whenever possible
+* Pass data down to Client Components via props
+* Avoid fetching data inside Client Components unless absolutely necessary
+
+### Goal
+
+* Minimize client-side JavaScript
+* Improve performance and SEO by maximizing server-rendered content
 
 ## Hooks & Logic
 
