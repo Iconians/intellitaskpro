@@ -10,16 +10,16 @@ todos:
     status: completed
   - id: split-kanban-board
     content: ""
-    status: pending
+    status: completed
   - id: split-integration-settings
     content: Refactor IntegrationSettings by provider sections + shared shell; keep static sections server where possible
-    status: pending
+    status: completed
   - id: split-large-modals
     content: Refactor CreateTaskModal, TagManagerModal, TaskDetailModal; under 100 lines; minimal client surface
-    status: pending
+    status: completed
   - id: split-lib-email-github-ai
     content: Split lib/email, github-sync*, ai/client by domain (200-line file rule)
-    status: pending
+    status: completed
   - id: split-app-clients
     content: ""
     status: pending
@@ -42,13 +42,13 @@ isProject: false
 These rules sit alongside existing component size limits (100-line components, 200-line files, hooks 100-150 lines), function design constraints, and the **route vs shared UI** boundary.
 
 
-| Principle                            | What it means for this repo                                                                                                                                                                                       |
-| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `**page.tsx` is a Server Component** | No `"use client"` on `page.tsx`. Pages orchestrate: fetch/compose on the server, render client children only where needed.                                                                                        |
-| **Prefer Server Components**         | Default new UI to Server Components; add `"use client"` only for interactivity (state, effects, handlers).                                                                                                        |
-| **Small client islands**             | Do not grow monolithic `*-client.tsx` files. Split into small client components + hooks under `[src/components/](src/components/)` / `[src/hooks/](src/hooks/)`; keep route files as thin composition.            |
-| **Data & rendering**                 | Fetch in Server Components (`page.tsx` or server layouts) when possible; pass data into client components via **props**. Avoid client-side fetching unless necessary (e.g. live updates, user-triggered refetch). |
-| **Goal**                             | Less client JS, more server-rendered content for performance and SEO.                                                                                                                                             |
+| Principle                          | What it means for this repo                                                                                                                                                                                       |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `**page.tsx` is a Server Component | No `"use client"` on `page.tsx`. Pages orchestrate: fetch/compose on the server, render client children only where needed.                                                                                        |
+| **Prefer Server Components**       | Default new UI to Server Components; add `"use client"` only for interactivity (state, effects, handlers).                                                                                                        |
+| **Small client islands**           | Do not grow monolithic `*-client.tsx` files. Split into small client components + hooks under `[src/components/](src/components/)` / `[src/hooks/](src/hooks/)`; keep route files as thin composition.            |
+| **Data & rendering**               | Fetch in Server Components (`page.tsx` or server layouts) when possible; pass data into client components via **props**. Avoid client-side fetching unless necessary (e.g. live updates, user-triggered refetch). |
+| **Goal**                           | Less client JS, more server-rendered content for performance and SEO.                                                                                                                                             |
 
 
 **Relationship to existing plan items:** Phases B–C (UI splits and app shells) should apply the **size/structure** rules *and* this **server/client data flow**. Phase E (API routes) is unchanged: server-only, no UI.
@@ -93,8 +93,8 @@ When splitting **BoardHeader**, **KanbanBoard**, **IntegrationSettings**, modals
 
 Applies to `[home/page.tsx](src/app/home/page.tsx)`, `[billing-client.tsx](src/app/(dashboard)`/billing/billing-client.tsx), `[profile-client.tsx](src/app/(dashboard)`/profile/profile-client.tsx), and similar:
 
-- `**page.tsx`**: Server Component — load data here (or via server helpers), pass serializable props to client children.
-- `***-client.tsx`**: Only interactivity and wiring; **not** the primary place for initial data load unless unavoidable.
+- `**page.tsx`: Server Component — load data here (or via server helpers), pass serializable props to client children.
+- `***-client.tsx`**: Only interactivity and wiring; **not the primary place for initial data load unless unavoidable.
 - Move reusable sections to `[src/components/{domain}/](src/components/)` as today, but split so **large static/marketing blocks** can stay server-rendered when extracted (avoid marking entire sections client by default).
 
 ### New emphasis — incremental audit (can merge with Phase C PRs)
@@ -129,9 +129,9 @@ Applies to `[home/page.tsx](src/app/home/page.tsx)`, `[billing-client.tsx](src/a
 
 ## Success criteria (additions)
 
-- Touched `**page.tsx` files** remain Server Components unless there is a documented exception.
+- Touched `**page.tsx` files remain Server Components unless there is a documented exception.
 - Initial **data for a route** is loaded on the server when practical, with client components receiving **props**.
-- `***-client.tsx`** files trend toward **composition + interactivity**, not bulk data loading and not whole-page client trees.
+- `***-client.tsx`** files trend toward **composition + interactivity, not bulk data loading and not whole-page client trees.
 - Touched hooks/lib/route helpers show progressive reduction of long multi-concern functions (targeting rule-compliant, shallow, composable helpers).
 - Existing criteria retained: components < 100 lines, hooks 100–150 lines, thin API routes, reusable UI under `src/components/`.
 

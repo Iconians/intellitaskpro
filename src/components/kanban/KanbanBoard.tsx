@@ -1,137 +1,18 @@
 "use client";
 
-import {
-  DndContext,
-  DragEndEvent,
-  DragOverlay,
-  DragStartEvent,
-  PointerSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-  rectIntersection,
-} from "@dnd-kit/core";
+import { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
-import { KanbanColumn } from "./KanbanColumn";
-import { TaskCard } from "./TaskCard";
-import { useRealtime } from "@/hooks/useRealtime";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { ShortcutHelp } from "../shared/ShortcutHelp";
 import { RiskAlerts } from "../ai/RiskAlerts";
 import { BulkEditModal } from "../tasks/BulkEditModal";
 import type { TaskStatus } from "@prisma/client";
-
-interface Board {
-  id: string;
-  name: string;
-  statuses: Array<{
-    id: string;
-    name: string;
-    status: TaskStatus;
-    order: number;
-  }>;
-  tasks: Array<{
-    id: string;
-    title: string;
-    description: string | null;
-    status: TaskStatus;
-    priority: string;
-    assigneeId: string | null;
-    assignee: {
-      id: string;
-      userId: string;
-      role: string;
-      user: {
-        id: string;
-        name: string | null;
-        email: string;
-      };
-    } | null;
-    order: number;
-    tags?: Array<{
-      tag: {
-        id: string;
-        name: string;
-        color: string;
-      };
-    }>;
-    dueDate?: string | null;
-  }>;
-}
-
-interface FilterState {
-  assigneeId?: string;
-  status?: string;
-  priority?: string;
-  tagId?: string;
-  dueDateFrom?: string;
-  dueDateTo?: string;
-  searchQuery?: string;
-}
-
-interface KanbanBoardProps {
-  boardId: string;
-  organizationId?: string;
-  userBoardRole?: "ADMIN" | "MEMBER" | "VIEWER";
-  filters?: FilterState;
-}
-
-function filterTasks(tasks: Board["tasks"], filters: FilterState): Board["tasks"] {
-  return tasks.filter((task) => {
-    // Filter by status
-    if (filters.status && task.status !== filters.status) {
-      return false;
-    }
-
-    // Filter by priority
-    if (filters.priority && task.priority !== filters.priority) {
-      return false;
-    }
-
-    // Filter by assignee
-    if (filters.assigneeId && task.assignee?.id !== filters.assigneeId) {
-      return false;
-    }
-
-    // Filter by tag (if tags are included in the task)
-    if (filters.tagId && task.tags) {
-      const hasTag = task.tags.some((tt) => tt.tag?.id === filters.tagId);
-      if (!hasTag) {
-        return false;
-      }
-    }
-
-    // Filter by due date
-    if (filters.dueDateFrom && task.dueDate) {
-      const dueDate = new Date(task.dueDate);
-      const fromDate = new Date(filters.dueDateFrom);
-      if (dueDate < fromDate) {
-        return false;
-      }
-    }
-    if (filters.dueDateTo && task.dueDate) {
-      const dueDate = new Date(task.dueDate);
-      const toDate = new Date(filters.dueDateTo);
-      toDate.setHours(23, 59, 59, 999); // Include entire day
-      if (dueDate > toDate) {
-        return false;
-      }
-    }
-
-    // Filter by search query
-    if (filters.searchQuery && filters.searchQuery.trim().length > 0) {
-      const query = filters.searchQuery.toLowerCase();
-      const titleMatch = task.title?.toLowerCase().includes(query);
-      const descMatch = task.description?.toLowerCase().includes(query);
-      if (!titleMatch && !descMatch) {
-        return false;
-      }
-    }
-
-    return true;
-  });
-}
+import { KanbanBulkActionsToolbar } from "./KanbanBulkActionsToolbar";
+import { KanbanBoardContent } from "./KanbanBoardContent";
+import { filterTasks } from "./filterTasks";
+import { useKanbanRealtime } from "./useKanbanRealtime";
+import type { Board, KanbanBoardProps } from "./types";
 
 export function KanbanBoard({ boardId, organizationId, userBoardRole, filters = {} }: KanbanBoardProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -190,20 +71,6 @@ export function KanbanBoard({ boardId, organizationId, userBoardRole, filters = 
   ]);
 
   const isViewer = userBoardRole === "VIEWER";
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-      disabled: isViewer || boardInteractionLocked,
-    }),
-    useSensor(TouchSensor, {
-      activationConstraint: {
-        distance: 10,
-      },
-      disabled: isViewer || boardInteractionLocked,
-    })
-  );
 
   const { data: board, isLoading, error: boardError } = useQuery<Board>({
     queryKey: ["board", boardId],
@@ -228,36 +95,9 @@ export function KanbanBoard({ boardId, organizationId, userBoardRole, filters = 
     retryDelay: 1000,
   });
 
-  useRealtime({
-    channelName: `private-board-${boardId}`,
-    eventName: "task-updated",
-    callback: () => {
-      queryClient.invalidateQueries({ queryKey: ["board", boardId] });
-    },
-  });
-
-  useRealtime({
-    channelName: `private-board-${boardId}`,
-    eventName: "task-created",
-    callback: () => {
-      queryClient.invalidateQueries({ queryKey: ["board", boardId] });
-    },
-  });
-
-  useRealtime({
-    channelName: `private-board-${boardId}`,
-    eventName: "task-deleted",
-    callback: () => {
-      queryClient.invalidateQueries({ queryKey: ["board", boardId] });
-    },
-  });
-
-  useRealtime({
-    channelName: `private-board-${boardId}`,
-    eventName: "tasks-generated",
-    callback: () => {
-      queryClient.invalidateQueries({ queryKey: ["board", boardId] });
-    },
+  useKanbanRealtime({
+    boardId,
+    onBoardEvent: () => queryClient.invalidateQueries({ queryKey: ["board", boardId] }),
   });
 
   const updateTaskMutation = useMutation({
@@ -412,8 +252,6 @@ export function KanbanBoard({ boardId, organizationId, userBoardRole, filters = 
   const allTasks = Array.isArray(board?.tasks) ? board.tasks : [];
   const filteredTasks = filterTasks(allTasks, filters);
 
-  const handleDragOver = () => {};
-
   const toggleTaskSelection = (taskId: string) => {
     setSelectedTaskIds((prev) => {
       const newSet = new Set(prev);
@@ -438,82 +276,32 @@ export function KanbanBoard({ boardId, organizationId, userBoardRole, filters = 
       
       {/* Bulk Actions Toolbar */}
       {selectedTaskIds.size > 0 && !isViewer && (
-        <div className="shrink-0 bg-blue-600 text-white px-2 xs:px-3 sm:px-4 py-2 flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2 xs:gap-0">
-          <span className="text-xs xs:text-sm font-medium">
-            {selectedTaskIds.size} task{selectedTaskIds.size !== 1 ? "s" : ""} selected
-          </span>
-          <div className="flex gap-1.5 xs:gap-2 w-full xs:w-auto">
-            <button
-              onClick={() => setShowBulkEdit(true)}
-              className="px-2 xs:px-3 py-1 text-xs xs:text-sm bg-white text-blue-600 rounded hover:bg-blue-50 flex-1 xs:flex-none whitespace-nowrap"
-            >
-              Edit Selected
-            </button>
-            <button
-              onClick={clearSelection}
-              className="px-2 xs:px-3 py-1 text-xs xs:text-sm bg-blue-700 rounded hover:bg-blue-800 flex-1 xs:flex-none whitespace-nowrap"
-            >
-              Clear Selection
-            </button>
-          </div>
-        </div>
+        <KanbanBulkActionsToolbar
+          selectedCount={selectedTaskIds.size}
+          onEditSelected={() => setShowBulkEdit(true)}
+          onClearSelection={clearSelection}
+        />
       )}
-
-      <DndContext
-        sensors={sensors}
-        collisionDetection={rectIntersection}
+      <KanbanBoardContent
+        statuses={sortedStatuses}
+        filteredTasks={filteredTasks}
+        activeTask={activeTask}
+        boardId={boardId}
+        organizationId={organizationId}
+        userBoardRole={userBoardRole}
+        boardInteractionLocked={boardInteractionLocked}
+        selectedTaskIds={selectedTaskIds}
+        onTaskSelect={toggleTaskSelection}
+        onClearSelection={clearSelection}
+        onAcquireInteractionLock={acquireBoardInteractionLock}
+        onReleaseInteractionLock={releaseBoardInteractionLock}
         onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
-      >
-        <div className="flex max-md:h-auto flex-col md:min-h-0">
-          <div
-            className={`flex gap-2 p-1 pb-3 pt-1 scrollbar-thin xs:gap-3 xs:p-2 sm:p-4 max-md:flex-col max-md:overflow-x-hidden max-md:overflow-y-visible md:min-h-0 md:flex-row md:flex-nowrap md:overflow-x-auto md:overflow-y-hidden md:overscroll-x-contain md:snap-x md:snap-mandatory md:overflow-touch md:touch-pan-x ${
-              boardInteractionLocked ? "pointer-events-none" : ""
-            }`}
-            {...(boardInteractionLocked ? { inert: true } : {})}
-          >
-            {sortedStatuses.map((status) => {
-              const columnTasks = filteredTasks
-                .filter((t) => t.status === status.status)
-                .sort((a, b) => a.order - b.order);
-
-              return (
-                <KanbanColumn
-                  key={status.id}
-                  id={status.id}
-                  status={status}
-                  tasks={columnTasks}
-                  boardId={boardId}
-                  organizationId={organizationId}
-                  userBoardRole={userBoardRole}
-                  selectedTaskIds={selectedTaskIds}
-                  onTaskSelect={toggleTaskSelection}
-                  acquireBoardInteractionLock={acquireBoardInteractionLock}
-                  releaseBoardInteractionLock={releaseBoardInteractionLock}
-                  onClearBoardSelection={clearSelection}
-                />
-              );
-            })}
-          </div>
-          <DragOverlay>
-            {activeTask ? (
-              <TaskCard
-                task={activeTask}
-                isDragging
-                boardId={boardId}
-                organizationId={organizationId}
-                userBoardRole={userBoardRole}
-              />
-            ) : null}
-          </DragOverlay>
-
-          <ShortcutHelp
-            isOpen={showShortcuts}
-            onClose={() => setShowShortcuts(false)}
-          />
-        </div>
-      </DndContext>
+      />
+      <ShortcutHelp
+        isOpen={showShortcuts}
+        onClose={() => setShowShortcuts(false)}
+      />
 
       {showBulkEdit && (
         <BulkEditModal
