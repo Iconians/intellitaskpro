@@ -35,6 +35,7 @@ description: >
 * Keep `page.tsx`, layout, and thin client components here
 * Avoid placing reusable components directly in the route folder — they belong in `components/` or `src/components/`
 
+
 ### Shared UI Components
 
 * `components/` or `src/components/` holds all reusable UI components
@@ -60,6 +61,8 @@ description: >
 * Extract subcomponents early (don’t wait until large files)
 * No deeply nested JSX (max 2–3 levels)
 * Move logic out of components into hooks or services
+* page.tsx components should always be server components
+* prefer server components over client components
 
 ---
 

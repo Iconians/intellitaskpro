@@ -4,10 +4,10 @@ overview: Bring the repo in line with the current [.cursor/rules.mdc](.cursor/ru
 todos:
   - id: rules-audit
     content: "Optional hygiene: confirm rules.mdc frontmatter parses (YAML comments under alwaysApply are valid); no full rewrite needed"
-    status: pending
+    status: completed
   - id: split-board-header
     content: Refactor BoardHeader.tsx into subcomponents + useBoardHeader hook (100-line rule, 3-responsibility split)
-    status: pending
+    status: completed
   - id: split-kanban-board
     content: Refactor KanbanBoard.tsx into useKanbanBoard + smaller presentational pieces; extract 30–40+ line functions
     status: pending
