@@ -4,6 +4,11 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { signOut } from "next-auth/react";
 import type { SerializedProfileForClient } from "@/lib/data/profile";
+import {
+  deleteUserAccount,
+  patchUserProfile,
+  type PatchProfileBody,
+} from "@/lib/profile-client";
 
 export type ProfilePageClientProps = {
   initialProfile: SerializedProfileForClient;
@@ -21,21 +26,9 @@ export function useProfilePage({ initialProfile }: ProfilePageClientProps) {
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
   const updateProfileMutation = useMutation({
-    mutationFn: async (data: {
-      name?: string;
-      password?: string;
-      currentPassword?: string;
-    }) => {
-      const res = await fetch("/api/user/profile", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to update profile");
-      }
-      return res.json() as Promise<Partial<SerializedProfileForClient>>;
+    mutationFn: async (data: PatchProfileBody) => {
+      const updated = await patchUserProfile(data);
+      return updated as Partial<SerializedProfileForClient>;
     },
     onSuccess: (updated) => {
       setProfile((prev) => ({
@@ -60,17 +53,7 @@ export function useProfilePage({ initialProfile }: ProfilePageClientProps) {
   });
 
   const deleteAccountMutation = useMutation({
-    mutationFn: async () => {
-      const res = await fetch("/api/user/account/delete", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to delete account");
-      }
-      return res.json();
-    },
+    mutationFn: () => deleteUserAccount(),
     onSuccess: async () => {
       await signOut({ callbackUrl: "/home" });
     },

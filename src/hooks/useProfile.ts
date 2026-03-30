@@ -2,6 +2,12 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
+import {
+  deleteUserAccount,
+  patchUserProfile,
+  type PatchProfileBody,
+} from "@/lib/profile-client";
+
 export interface ProfileUser {
   id: string;
   email: string;
@@ -28,22 +34,7 @@ export function useProfileUpdate() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: {
-      name?: string;
-      password?: string;
-      currentPassword?: string;
-    }) => {
-      const res = await fetch("/api/user/profile", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to update profile");
-      }
-      return res.json();
-    },
+    mutationFn: (data: PatchProfileBody) => patchUserProfile(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["userProfile"] });
     },
@@ -52,16 +43,6 @@ export function useProfileUpdate() {
 
 export function useProfileDelete() {
   return useMutation({
-    mutationFn: async () => {
-      const res = await fetch("/api/user/account/delete", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to delete account");
-      }
-      return res.json();
-    },
+    mutationFn: () => deleteUserAccount(),
   });
 }

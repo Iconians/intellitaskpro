@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { SerializedAuditLog } from "@/lib/data/audit-logs";
+import { fetchAuditLogsForOrg } from "@/lib/audit-logs-client";
 
 export interface AuditLogsPageClientProps {
   organizations: Array<{ id: string; name: string }>;
@@ -22,19 +23,10 @@ export function useAuditLogsPage({
 
   const { data: auditLogs, isLoading } = useQuery({
     queryKey: ["audit-logs", selectedOrgId, entityType],
-    queryFn: async () => {
-      if (!selectedOrgId) return [];
-      const params = new URLSearchParams({
-        organizationId: selectedOrgId,
-        limit: "100",
-      });
-      if (entityType !== "all") {
-        params.append("entityType", entityType);
-      }
-      const res = await fetch(`/api/audit-logs?${params.toString()}`);
-      if (!res.ok) throw new Error("Failed to fetch audit logs");
-      return res.json() as Promise<SerializedAuditLog[]>;
-    },
+    queryFn: () =>
+      !selectedOrgId
+        ? Promise.resolve([])
+        : fetchAuditLogsForOrg(selectedOrgId, entityType),
     enabled: !!selectedOrgId && organizations.length > 0,
     initialData:
       selectedOrgId === defaultOrganizationId && entityType === "all"

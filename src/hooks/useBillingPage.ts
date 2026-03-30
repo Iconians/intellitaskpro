@@ -8,6 +8,14 @@ import type {
   SerializedSubscriptionForBilling,
   UsageForBilling,
 } from "@/lib/data/billing";
+import {
+  applySyncSubscriptionOnSuccess,
+  fetchSubscriptionForOrg,
+  fetchUsageForOrg,
+  patchManageSubscription,
+  patchSyncSubscription,
+  postCreateSubscription,
+} from "@/lib/subscription-client";
 
 export interface BillingPageClientProps {
   organizations: Array<{ id: string; name: string }>;
@@ -15,6 +23,22 @@ export interface BillingPageClientProps {
   initialSubscription: SerializedSubscriptionForBilling | null;
   initialUsage: UsageForBilling;
   defaultOrgId: string;
+}
+
+function shouldAutoSyncStripeSubscription(
+  subscription: {
+    stripeSubscriptionId?: string | null;
+    plan?: { name?: string | null } | null;
+  } | null | undefined,
+  syncPending: boolean,
+  syncSuccess: boolean
+): boolean {
+  return Boolean(
+    subscription?.stripeSubscriptionId &&
+      subscription.plan?.name === "Free" &&
+      !syncPending &&
+      !syncSuccess
+  );
 }
 
 export function useBillingPage({
@@ -29,17 +53,10 @@ export function useBillingPage({
 
   const { data: subscription, isLoading: isLoadingSubscription } = useQuery({
     queryKey: ["subscription", selectedOrgId],
-    queryFn: async () => {
-      if (!selectedOrgId) return null;
-      const res = await fetch(
-        `/api/subscriptions?organizationId=${selectedOrgId}`
-      );
-      if (!res.ok) {
-        if (res.status === 404) return null;
-        throw new Error("Failed to fetch subscription");
-      }
-      return res.json();
-    },
+    queryFn: () =>
+      !selectedOrgId
+        ? Promise.resolve(null)
+        : fetchSubscriptionForOrg(selectedOrgId),
     initialData:
       selectedOrgId === defaultOrgId
         ? (initialSubscription ?? undefined)
@@ -51,44 +68,17 @@ export function useBillingPage({
 
   const { data: usage } = useQuery({
     queryKey: ["usage", selectedOrgId],
-    queryFn: async () => {
-      if (!selectedOrgId) return null;
-      const res = await fetch(`/api/usage?organizationId=${selectedOrgId}`);
-      if (!res.ok) throw new Error("Failed to fetch usage");
-      return res.json();
-    },
+    queryFn: () =>
+      !selectedOrgId
+        ? Promise.resolve(null)
+        : fetchUsageForOrg(selectedOrgId),
     initialData:
       selectedOrgId === defaultOrgId ? initialUsage : undefined,
     enabled: !!selectedOrgId,
   });
 
   const createSubscriptionMutation = useMutation({
-    mutationFn: async ({
-      organizationId,
-      planId,
-    }: {
-      organizationId: string;
-      planId: string;
-    }) => {
-      const res = await fetch("/api/subscriptions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ organizationId, planId }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to create subscription");
-      }
-      const data = await res.json();
-      if (data.message && data.message.includes("Free plan")) {
-        window.location.reload();
-        return data;
-      }
-      if (data.url) {
-        window.location.href = data.url;
-      }
-      return data;
-    },
+    mutationFn: postCreateSubscription,
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["subscription", selectedOrgId],
@@ -97,63 +87,16 @@ export function useBillingPage({
   });
 
   const manageSubscriptionMutation = useMutation({
-    mutationFn: async (organizationId: string) => {
-      const res = await fetch("/api/subscriptions", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ organizationId, action: "manage" }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to manage subscription");
-      }
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        throw new Error("No redirect URL received from server");
-      }
-      return data;
-    },
+    mutationFn: patchManageSubscription,
     onError: (error: Error) => {
       alert(`Failed to manage subscription: ${error.message}`);
     },
   });
 
   const syncSubscriptionMutation = useMutation({
-    mutationFn: async (organizationId: string) => {
-      const res = await fetch("/api/subscriptions", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ organizationId, action: "sync" }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to sync subscription");
-      }
-      return res.json();
-    },
+    mutationFn: patchSyncSubscription,
     onSuccess: (data) => {
-      queryClient.invalidateQueries({
-        queryKey: ["subscription", selectedOrgId],
-      });
-      if (data?.subscription) {
-        if (!data.subscription.plan) {
-          queryClient.invalidateQueries({
-            queryKey: ["subscription", selectedOrgId],
-          });
-          return;
-        }
-        queryClient.setQueryData(
-          ["subscription", selectedOrgId],
-          data.subscription
-        );
-      }
-      setTimeout(() => {
-        queryClient.refetchQueries({
-          queryKey: ["subscription", selectedOrgId],
-        });
-      }, 500);
+      applySyncSubscriptionOnSuccess(queryClient, selectedOrgId, data);
     },
     onError: (error: Error) => {
       alert(`Failed to sync subscription: ${error.message}`);
@@ -164,33 +107,29 @@ export function useBillingPage({
     channelName: selectedOrgId ? `private-organization-${selectedOrgId}` : "",
     eventName: "subscription-updated",
     callback: () => {
-      if (selectedOrgId) {
-        queryClient.invalidateQueries({
-          queryKey: ["subscription", selectedOrgId],
-        });
-        queryClient.refetchQueries({
-          queryKey: ["subscription", selectedOrgId],
-        });
-      }
+      if (!selectedOrgId) return;
+      queryClient.invalidateQueries({
+        queryKey: ["subscription", selectedOrgId],
+      });
+      queryClient.refetchQueries({
+        queryKey: ["subscription", selectedOrgId],
+      });
     },
   });
 
   useEffect(() => {
     if (
-      subscription?.stripeSubscriptionId &&
-      subscription.plan?.name === "Free" &&
-      selectedOrgId &&
-      !syncSubscriptionMutation.isPending &&
-      !syncSubscriptionMutation.isSuccess
+      !selectedOrgId ||
+      !shouldAutoSyncStripeSubscription(
+        subscription,
+        syncSubscriptionMutation.isPending,
+        syncSubscriptionMutation.isSuccess
+      )
     ) {
-      syncSubscriptionMutation.mutate(selectedOrgId);
+      return;
     }
-  }, [
-    subscription?.stripeSubscriptionId,
-    subscription?.plan?.name,
-    selectedOrgId,
-    syncSubscriptionMutation,
-  ]);
+    syncSubscriptionMutation.mutate(selectedOrgId);
+  }, [subscription, selectedOrgId, syncSubscriptionMutation]);
 
   const currentPlan =
     subscription?.plan ||
