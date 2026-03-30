@@ -8,15 +8,15 @@ const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
 const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
 
 export async function GET(request: NextRequest) {
+  const requestOrigin = new URL(request.url).origin.replace(/\/$/, "");
+  const appOrigin = requestOrigin;
   try {
-    const requestOrigin = new URL(request.url).origin.replace(/\/$/, "");
     const envOrigin = process.env.NEXTAUTH_URL?.replace(/\/$/, "");
     if (envOrigin && envOrigin !== requestOrigin) {
       console.warn(
         `GitHub OAuth origin mismatch: NEXTAUTH_URL=${envOrigin}, request=${requestOrigin}`
       );
     }
-    const appOrigin = requestOrigin;
 
     await requireAuth();
     const { searchParams } = new URL(request.url);
@@ -108,7 +108,7 @@ export async function GET(request: NextRequest) {
     if (state && state.length > 10 && state.length < 50) {
       if (!/^[a-zA-Z0-9_-]+$/.test(state)) {
         return NextResponse.redirect(
-          `${NEXTAUTH_URL}/boards?error=${encodeURIComponent(
+          `${appOrigin}/boards?error=${encodeURIComponent(
             "Invalid state parameter"
           )}`
         );
