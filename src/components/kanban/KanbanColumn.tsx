@@ -8,39 +8,12 @@ import {
 } from "@dnd-kit/sortable";
 import { TaskCard } from "./TaskCard";
 import { CreateTaskModal } from "../tasks/CreateTaskModal";
-import type { TaskStatus } from "@prisma/client";
-
-interface Task {
-  id: string;
-  title: string;
-  description: string | null;
-  status: TaskStatus;
-  priority: string;
-  assigneeId: string | null;
-  assignee: {
-    id: string;
-    userId: string;
-    role: string;
-    user: {
-      id: string;
-      name: string | null;
-      email: string;
-    };
-  } | null;
-  order: number;
-}
-
-interface Status {
-  id: string;
-  name: string;
-  status: TaskStatus;
-  order: number;
-}
+import type { BoardStatus, BoardTask } from "./types";
 
 interface KanbanColumnProps {
   id: string;
-  status: Status;
-  tasks: Task[];
+  status: BoardStatus;
+  tasks: BoardTask[];
   boardId: string;
   organizationId?: string;
   userBoardRole?: "ADMIN" | "MEMBER" | "VIEWER";

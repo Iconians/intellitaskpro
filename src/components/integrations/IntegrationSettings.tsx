@@ -3,18 +3,48 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { IntegrationProvider } from "@prisma/client";
+import { ProviderConfigSection } from "./ProviderConfigSection";
+import { ProviderSetupInstructions } from "./ProviderSetupInstructions";
+import { IntegrationCardShell } from "./IntegrationCardShell";
+import type { Integration, IntegrationSettingsProps } from "./types";
 
-interface IntegrationSettingsProps {
-  organizationId: string;
-}
+const PROVIDER_OPTIONS = [
+  {
+    provider: IntegrationProvider.SLACK,
+    title: "Add Slack",
+    description: "Receive notifications in Slack channels",
+  },
+  {
+    provider: IntegrationProvider.JIRA,
+    title: "Add Jira",
+    description: "Sync tasks with Jira issues",
+  },
+  {
+    provider: IntegrationProvider.LINEAR,
+    title: "Add Linear",
+    description: "Sync tasks with Linear issues",
+  },
+  {
+    provider: IntegrationProvider.ZAPIER,
+    title: "Add Zapier",
+    description: "Connect with 6000+ apps via Zapier",
+  },
+] as const;
 
-interface Integration {
-  id: string;
-  provider: IntegrationProvider;
-  config: Record<string, unknown>;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
+function buildWebhookUrl(provider: IntegrationProvider, organizationId: string) {
+  if (typeof window === "undefined") return null;
+
+  const baseUrl = window.location.origin;
+  if (provider === IntegrationProvider.SLACK) {
+    return `${baseUrl}/api/integrations/slack/webhook?organizationId=${organizationId}`;
+  }
+  if (provider === IntegrationProvider.JIRA) {
+    return `${baseUrl}/api/integrations/jira/webhook?organizationId=${organizationId}`;
+  }
+  if (provider === IntegrationProvider.LINEAR) {
+    return `${baseUrl}/api/integrations/linear/webhook?organizationId=${organizationId}`;
+  }
+  return null;
 }
 
 export function IntegrationSettings({ organizationId }: IntegrationSettingsProps) {
@@ -115,208 +145,6 @@ export function IntegrationSettings({ organizationId }: IntegrationSettingsProps
     },
   });
 
-  const renderProviderConfig = (provider: IntegrationProvider) => {
-    switch (provider) {
-      case IntegrationProvider.SLACK:
-        return (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Webhook URL <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={String(config.webhookUrl ?? "")}
-                onChange={(e) => setConfig({ ...config, webhookUrl: e.target.value })}
-                placeholder="https://hooks.slack.com/services/..."
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-              />
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                For sending notifications from this app to Slack
-              </p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Signing secret (for incoming webhooks)
-              </label>
-              <input
-                type="password"
-                value={String(config.signingSecret ?? "")}
-                onChange={(e) => setConfig({ ...config, signingSecret: e.target.value })}
-                placeholder="Optional: paste from Slack app → Basic Information → Signing Secret"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-              />
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Required to verify requests from Slack (slash commands, events). Get it from your Slack app → Basic Information → Signing Secret.
-              </p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Channel (optional)
-              </label>
-              <input
-                type="text"
-                value={String(config.channel ?? "")}
-                onChange={(e) => setConfig({ ...config, channel: e.target.value })}
-                placeholder="#general"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Username (optional)
-              </label>
-              <input
-                type="text"
-                value={String(config.username ?? "")}
-                onChange={(e) => setConfig({ ...config, username: e.target.value })}
-                placeholder="Project Management"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-              />
-            </div>
-          </div>
-        );
-
-      case IntegrationProvider.JIRA:
-        return (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Base URL <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={String(config.baseUrl ?? "")}
-                onChange={(e) => setConfig({ ...config, baseUrl: e.target.value })}
-                placeholder="https://yourcompany.atlassian.net"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Email <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="email"
-                value={String(config.email ?? "")}
-                onChange={(e) => setConfig({ ...config, email: e.target.value })}
-                placeholder="your@email.com"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                API Token <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="password"
-                value={String(config.apiToken ?? "")}
-                onChange={(e) => setConfig({ ...config, apiToken: e.target.value })}
-                placeholder="Your Jira API token"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Project Key <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={String(config.projectKey ?? "")}
-                onChange={(e) => setConfig({ ...config, projectKey: e.target.value })}
-                placeholder="PROJ"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Webhook secret (optional, for incoming webhooks)
-              </label>
-              <input
-                type="password"
-                value={String(config.webhookSecret ?? "")}
-                onChange={(e) => setConfig({ ...config, webhookSecret: e.target.value })}
-                placeholder="If Jira webhook uses a shared secret, paste it here"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-              />
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Used to verify incoming webhooks from Jira when configured
-              </p>
-            </div>
-          </div>
-        );
-
-      case IntegrationProvider.LINEAR:
-        return (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                API Key <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="password"
-                value={String(config.apiKey ?? "")}
-                onChange={(e) => setConfig({ ...config, apiKey: e.target.value })}
-                placeholder="lin_api_..."
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Team ID <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={String(config.teamId ?? "")}
-                onChange={(e) => setConfig({ ...config, teamId: e.target.value })}
-                placeholder="Team UUID"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Webhook secret (for incoming webhooks)
-              </label>
-              <input
-                type="password"
-                value={String(config.webhookSecret ?? "")}
-                onChange={(e) => setConfig({ ...config, webhookSecret: e.target.value })}
-                placeholder="Paste the secret from Linear webhook settings"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-              />
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                When you create a webhook in Linear (Settings → API → Webhooks), copy the secret here so we can verify incoming requests.
-              </p>
-            </div>
-          </div>
-        );
-
-      case IntegrationProvider.ZAPIER:
-        return (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Webhook URL <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={String(config.webhookUrl ?? "")}
-                onChange={(e) => setConfig({ ...config, webhookUrl: e.target.value })}
-                placeholder="https://hooks.zapier.com/hooks/catch/..."
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-              />
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                From Zapier: Webhooks by Zapier → Catch Hook. Keep this URL private; it acts as the secret.
-              </p>
-            </div>
-          </div>
-        );
-
-      default:
-        return null;
-    }
-  };
-
   const handleSave = () => {
     if (!selectedProvider) return;
     if (editingIntegrationId) {
@@ -346,23 +174,8 @@ export function IntegrationSettings({ organizationId }: IntegrationSettingsProps
     });
   };
 
-  const getWebhookUrl = (provider: IntegrationProvider): string | null => {
-    if (typeof window === "undefined") return null;
-    const baseUrl = window.location.origin;
-    switch (provider) {
-      case IntegrationProvider.SLACK:
-        return `${baseUrl}/api/integrations/slack/webhook?organizationId=${organizationId}`;
-      case IntegrationProvider.JIRA:
-        return `${baseUrl}/api/integrations/jira/webhook?organizationId=${organizationId}`;
-      case IntegrationProvider.LINEAR:
-        return `${baseUrl}/api/integrations/linear/webhook?organizationId=${organizationId}`;
-      default:
-        return null;
-    }
-  };
-
   const handleCopyWebhookUrl = (provider: IntegrationProvider) => {
-    const url = getWebhookUrl(provider);
+    const url = buildWebhookUrl(provider, organizationId);
     if (url) {
       navigator.clipboard.writeText(url);
       setCopiedUrl(provider);
@@ -391,23 +204,21 @@ export function IntegrationSettings({ organizationId }: IntegrationSettingsProps
       {/* Existing Integrations */}
       <div className="space-y-4">
         {existingIntegrations.map((integration) => {
-          const webhookUrl = getWebhookUrl(integration.provider);
+          const webhookUrl = buildWebhookUrl(integration.provider, organizationId);
           return (
-            <div
+            <IntegrationCardShell
               key={integration.id}
-              className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
-            >
-              <div className="flex items-center justify-between">
+              header={(
                 <div className="flex items-center gap-3">
                   <div>
-                    <h4 className="font-medium text-gray-900 dark:text-white">
-                      {integration.provider}
-                    </h4>
+                    <h4 className="font-medium text-gray-900 dark:text-white">{integration.provider}</h4>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                       {integration.isActive ? "Active" : "Inactive"}
                     </p>
                   </div>
                 </div>
+              )}
+              actions={(
                 <div className="flex items-center gap-2 flex-wrap">
                   <button
                     onClick={() => {
@@ -428,10 +239,7 @@ export function IntegrationSettings({ organizationId }: IntegrationSettingsProps
                   </button>
                   <button
                     onClick={() =>
-                      updateMutation.mutate({
-                        id: integration.id,
-                        isActive: !integration.isActive,
-                      })
+                      updateMutation.mutate({ id: integration.id, isActive: !integration.isActive })
                     }
                     className={`px-3 py-1.5 text-sm rounded-lg ${
                       integration.isActive
@@ -452,9 +260,8 @@ export function IntegrationSettings({ organizationId }: IntegrationSettingsProps
                     Delete
                   </button>
                 </div>
-              </div>
-
-              {/* Webhook URL for bidirectional sync */}
+              )}
+            >
               {webhookUrl && integration.isActive && (
                 <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
                   <label className="block text-xs font-medium text-blue-900 dark:text-blue-200 mb-2">
@@ -466,7 +273,7 @@ export function IntegrationSettings({ organizationId }: IntegrationSettingsProps
                       readOnly
                       value={webhookUrl}
                       className="flex-1 px-3 py-2 text-xs border border-blue-300 dark:border-blue-700 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white font-mono"
-                      onClick={(e) => (e.target as HTMLInputElement).select()}
+                      onClick={(event) => (event.target as HTMLInputElement).select()}
                     />
                     <button
                       onClick={() => handleCopyWebhookUrl(integration.provider)}
@@ -481,7 +288,6 @@ export function IntegrationSettings({ organizationId }: IntegrationSettingsProps
                 </div>
               )}
 
-              {/* Setup Instructions Toggle */}
               <div className="mt-3">
                 <button
                   onClick={() =>
@@ -495,112 +301,7 @@ export function IntegrationSettings({ organizationId }: IntegrationSettingsProps
                 </button>
                 {showInstructions === integration.provider && (
                   <div className="mt-2 p-4 bg-gray-50 dark:bg-gray-900/50 rounded border border-gray-200 dark:border-gray-700 text-xs space-y-3">
-                    {integration.provider === IntegrationProvider.SLACK && (
-                      <>
-                        <div>
-                          <p className="font-medium text-gray-900 dark:text-white mb-1">
-                            Step 1: Create Slack Webhook (for notifications TO Slack)
-                          </p>
-                          <ol className="list-decimal list-inside space-y-1 text-gray-700 dark:text-gray-300 ml-2">
-                            <li>Go to <a href="https://api.slack.com/apps" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">api.slack.com/apps</a></li>
-                            <li>Create a new app or select existing</li>
-                            <li>Enable &quot;Incoming Webhooks&quot;</li>
-                            <li>Add webhook to workspace and copy the webhook URL</li>
-                            <li>Paste it in the Webhook URL field above</li>
-                          </ol>
-                        </div>
-                        {webhookUrl && (
-                          <div>
-                            <p className="font-medium text-gray-900 dark:text-white mb-1">
-                              Step 2: Configure Webhook URL in Slack (for events FROM Slack)
-                            </p>
-                            <ol className="list-decimal list-inside space-y-1 text-gray-700 dark:text-gray-300 ml-2">
-                              <li>In your Slack app settings, go to &quot;Interactivity &amp; Shortcuts&quot; or &quot;Slash Commands&quot;</li>
-                              <li>Copy the Webhook URL shown above</li>
-                              <li>Paste it as the Request URL in Slack</li>
-                            </ol>
-                            <p className="font-medium text-gray-900 dark:text-white mt-2 mb-1">
-                              Step 3: Add Signing secret (required to verify incoming requests)
-                            </p>
-                            <ol className="list-decimal list-inside space-y-1 text-gray-700 dark:text-gray-300 ml-2">
-                              <li>In Slack app: Basic Information → App Credentials → Signing Secret</li>
-                              <li>Copy the signing secret and paste it in the &quot;Signing secret&quot; field (click Edit on this integration if you already saved)</li>
-                            </ol>
-                          </div>
-                        )}
-                      </>
-                    )}
-                    {integration.provider === IntegrationProvider.JIRA && (
-                      <>
-                        <div>
-                          <p className="font-medium text-gray-900 dark:text-white mb-1">
-                            Step 1: Create Jira API Token
-                          </p>
-                          <ol className="list-decimal list-inside space-y-1 text-gray-700 dark:text-gray-300 ml-2">
-                            <li>Go to <a href="https://id.atlassian.com/manage-profile/security/api-tokens" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">Atlassian API Tokens</a></li>
-                            <li>Create a new API token</li>
-                            <li>Copy the token and paste it above</li>
-                          </ol>
-                        </div>
-                        {webhookUrl && (
-                          <div>
-                            <p className="font-medium text-gray-900 dark:text-white mb-1">
-                              Step 2: Configure Webhook in Jira (for bidirectional sync)
-                            </p>
-                            <ol className="list-decimal list-inside space-y-1 text-gray-700 dark:text-gray-300 ml-2">
-                              <li>In Jira: Settings → System → Webhooks</li>
-                              <li>Create a new webhook and paste the Webhook URL shown above</li>
-                              <li>Select events: Issue Created, Issue Updated</li>
-                              <li>If Jira provides a shared secret for the webhook, paste it in the &quot;Webhook secret&quot; field (Edit this integration to add it)</li>
-                            </ol>
-                          </div>
-                        )}
-                      </>
-                    )}
-                    {integration.provider === IntegrationProvider.LINEAR && (
-                      <>
-                        <div>
-                          <p className="font-medium text-gray-900 dark:text-white mb-1">
-                            Step 1: Create Linear API Key
-                          </p>
-                          <ol className="list-decimal list-inside space-y-1 text-gray-700 dark:text-gray-300 ml-2">
-                            <li>Go to <a href="https://linear.app/settings/api" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">Linear API Settings</a></li>
-                            <li>Create a new API key</li>
-                            <li>Copy the key (starts with <code className="bg-gray-200 dark:bg-gray-800 px-1 rounded">lin_api_</code>)</li>
-                            <li>Paste it above along with your Team ID</li>
-                          </ol>
-                        </div>
-                        {webhookUrl && (
-                          <div>
-                            <p className="font-medium text-gray-900 dark:text-white mb-1">
-                              Step 2: Configure Webhook in Linear (for bidirectional sync)
-                            </p>
-                            <ol className="list-decimal list-inside space-y-1 text-gray-700 dark:text-gray-300 ml-2">
-                              <li>In Linear: Settings → API → Webhooks</li>
-                              <li>Create a new webhook</li>
-                              <li>Copy the &quot;Webhook URL&quot; shown above into the webhook URL in Linear</li>
-                              <li>Copy the webhook secret Linear shows and paste it in the &quot;Webhook secret&quot; field above (click Edit if you already saved)</li>
-                              <li>Select events: Issue Created, Issue Updated</li>
-                            </ol>
-                          </div>
-                        )}
-                      </>
-                    )}
-                    {integration.provider === IntegrationProvider.ZAPIER && (
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-white mb-1">
-                          Zapier Setup
-                        </p>
-                        <ol className="list-decimal list-inside space-y-1 text-gray-700 dark:text-gray-300 ml-2">
-                          <li>Go to <a href="https://zapier.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">Zapier</a> and create a Zap</li>
-                          <li>Choose &quot;Webhooks by Zapier&quot; as the trigger</li>
-                          <li>Select &quot;Catch Hook&quot;</li>
-                          <li>Copy the webhook URL from Zapier</li>
-                          <li>Paste it in the Webhook URL field above</li>
-                          <li>When tasks are created/updated, they&apos;ll be sent to your Zapier webhook</li>
-                        </ol>
-                      </div>
-                    )}
+                    <ProviderSetupInstructions provider={integration.provider} webhookUrl={webhookUrl} />
                   </div>
                 )}
               </div>
@@ -613,7 +314,7 @@ export function IntegrationSettings({ organizationId }: IntegrationSettingsProps
               {testMutation.isSuccess && (
                 <p className="mt-2 text-sm text-green-600 dark:text-green-400">Test successful!</p>
               )}
-            </div>
+            </IntegrationCardShell>
           );
         })}
       </div>
@@ -621,42 +322,18 @@ export function IntegrationSettings({ organizationId }: IntegrationSettingsProps
       {/* Add New Integration */}
       {!selectedProvider ? (
         <div>
-          <button
-            onClick={() => setSelectedProvider(IntegrationProvider.SLACK)}
-            className="w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 text-left"
-          >
-            <div className="font-medium text-gray-900 dark:text-white">Add Slack</div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              Receive notifications in Slack channels
-            </div>
-          </button>
-          <button
-            onClick={() => setSelectedProvider(IntegrationProvider.JIRA)}
-            className="w-full mt-2 px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 text-left"
-          >
-            <div className="font-medium text-gray-900 dark:text-white">Add Jira</div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              Sync tasks with Jira issues
-            </div>
-          </button>
-          <button
-            onClick={() => setSelectedProvider(IntegrationProvider.LINEAR)}
-            className="w-full mt-2 px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 text-left"
-          >
-            <div className="font-medium text-gray-900 dark:text-white">Add Linear</div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              Sync tasks with Linear issues
-            </div>
-          </button>
-          <button
-            onClick={() => setSelectedProvider(IntegrationProvider.ZAPIER)}
-            className="w-full mt-2 px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 text-left"
-          >
-            <div className="font-medium text-gray-900 dark:text-white">Add Zapier</div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              Connect with 6000+ apps via Zapier
-            </div>
-          </button>
+          {PROVIDER_OPTIONS.map((option, index) => (
+            <button
+              key={option.provider}
+              onClick={() => setSelectedProvider(option.provider)}
+              className={`w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 text-left ${
+                index > 0 ? "mt-2" : ""
+              }`}
+            >
+              <div className="font-medium text-gray-900 dark:text-white">{option.title}</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">{option.description}</div>
+            </button>
+          ))}
         </div>
       ) : (
         <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
@@ -675,7 +352,11 @@ export function IntegrationSettings({ organizationId }: IntegrationSettingsProps
               Cancel
             </button>
           </div>
-          {renderProviderConfig(selectedProvider)}
+          <ProviderConfigSection
+            provider={selectedProvider}
+            config={config}
+            onConfigChange={setConfig}
+          />
 
           {/* Show webhook URL for providers that need it */}
           {selectedProvider && selectedProvider !== IntegrationProvider.ZAPIER && (
@@ -687,7 +368,7 @@ export function IntegrationSettings({ organizationId }: IntegrationSettingsProps
                 <input
                   type="text"
                   readOnly
-                  value={getWebhookUrl(selectedProvider) || ""}
+                  value={buildWebhookUrl(selectedProvider, organizationId) || ""}
                   className="flex-1 px-3 py-2 text-xs border border-blue-300 dark:border-blue-700 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white font-mono"
                   onClick={(e) => (e.target as HTMLInputElement).select()}
                 />
