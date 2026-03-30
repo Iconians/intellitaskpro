@@ -104,6 +104,29 @@ description: >
 
 ---
 
+## Function Design Rules
+
+* Functions must have a single responsibility
+* Functions should be small and focused (5–15 lines preferred)
+* If a function exceeds ~20 lines → refactor into smaller functions
+* Each function should do one clear, well-defined task
+
+### Refactoring Guidelines
+
+* If a function handles multiple concerns → split it
+* If a function has nested logic (multiple conditionals/loops) → extract helper functions
+* If a function name cannot clearly describe what it does → it is too complex
+
+### Readability Standard
+
+* A function should be understandable at a glance
+* Avoid deep nesting (max 2–3 levels)
+* Prefer clear, descriptive names over comments
+
+### Goal
+
+* Small, composable functions that are easy to read, test, and reuse
+
 ## Naming Conventions
 
 * Files: kebab-case or PascalCase (be consistent)
@@ -166,6 +189,7 @@ description: >
 * If state management becomes complex → extract into a hook
 * If a function is longer than 30–40 lines → refactor into smaller functions
 * If a component needs state or effects → isolate that logic into a small client component
+* If a function grows beyond ~20 lines or handles multiple concerns → split it immediately
 
 ---
 
