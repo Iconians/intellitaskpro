@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getAnalyticsPayload } from "@/lib/data/analytics";
 import { AnalyticsPageClient } from "./analytics-client";
 
 export default async function AnalyticsPage() {
@@ -9,7 +10,6 @@ export default async function AnalyticsPage() {
     redirect("/login");
   }
 
-  // Get user's organizations
   const members = await prisma.member.findMany({
     where: { userId: user.id },
     include: {
@@ -17,12 +17,25 @@ export default async function AnalyticsPage() {
     },
   });
 
+  const organizations = members.map((m) => ({
+    id: m.organization.id,
+    name: m.organization.name,
+  }));
+
+  const defaultOrganizationId = organizations[0]?.id ?? "";
+  const initialAnalytics =
+    defaultOrganizationId.length > 0
+      ? await getAnalyticsPayload({
+          organizationId: defaultOrganizationId,
+          period: "month",
+        })
+      : null;
+
   return (
     <AnalyticsPageClient
-      organizations={members.map((m) => ({
-        id: m.organization.id,
-        name: m.organization.name,
-      }))}
+      organizations={organizations}
+      initialAnalytics={initialAnalytics}
+      defaultOrganizationId={defaultOrganizationId}
     />
   );
 }

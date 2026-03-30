@@ -15,7 +15,7 @@ interface FilterState {
   searchQuery?: string;
 }
 
-interface BoardPageClientProps {
+export interface BoardPageClientProps {
   boardId: string;
   boardName: string;
   boardDescription: string | null;

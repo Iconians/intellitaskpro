@@ -4,6 +4,12 @@ import { useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { TaskPriority, TaskStatus } from "@prisma/client";
 
+import {
+  attachTagIdsToTask,
+  createTaskRequest,
+  describeTaskFromTitle,
+} from "@/lib/task-create-client";
+
 interface Board {
   tasks: Array<{ id: string; status: TaskStatus }>;
 }
@@ -26,6 +32,32 @@ interface UseCreateTaskModalStateParams {
   organizationId?: string;
   defaultStatus?: string;
   onClose: () => void;
+}
+
+function mergeTagsUnique(orgTags: Tag[], boardTags: Tag[]): Tag[] {
+  return Array.from(
+    new Map([...orgTags, ...boardTags].map((tag) => [tag.id, tag])).values()
+  );
+}
+
+function buildOptimisticTask(
+  title: string,
+  description: string,
+  defaultStatus: string | undefined,
+  priority: TaskPriority,
+  previousBoard: Board
+) {
+  const status = (defaultStatus as TaskStatus) || "TODO";
+  return {
+    id: `temp-${Date.now()}`,
+    title,
+    description: description || null,
+    status,
+    priority,
+    assigneeId: null,
+    assignee: null,
+    order: previousBoard.tasks.filter((task) => task.status === status).length,
+  };
 }
 
 export function useCreateTaskModalState({
@@ -64,57 +96,28 @@ export function useCreateTaskModalState({
     enabled: Boolean(organizationId),
   });
 
-  const tags = Array.from(
-    new Map([...orgTags, ...boardTags].map((tag) => [tag.id, tag])).values()
-  );
+  const tags = mergeTagsUnique(orgTags, boardTags);
   const tagsLoading = boardTagsLoading || orgTagsLoading;
 
   const generateDescriptionMutation = useMutation({
-    mutationFn: async () => {
-      const res = await fetch("/api/ai/describe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, boardId }),
-      });
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || "Failed to generate description");
-      }
-      return res.json();
-    },
-    onSuccess: (data: { description?: string }) => setDescription(data.description || ""),
+    mutationFn: () => describeTaskFromTitle({ title, boardId }),
+    onSuccess: (data) => setDescription(data.description || ""),
   });
 
   const createTaskMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch("/api/tasks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title,
-          description,
-          boardId,
-          status: defaultStatus,
-          priority,
-          dueDate: dueDate || undefined,
-          estimatedHours: estimatedHours ? parseFloat(estimatedHours) : undefined,
-        }),
+      const task = await createTaskRequest({
+        title,
+        description,
+        boardId,
+        status: defaultStatus,
+        priority,
+        dueDate: dueDate || undefined,
+        estimatedHours: estimatedHours ? parseFloat(estimatedHours) : undefined,
       });
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || "Failed to create task");
-      }
-      const task = await res.json();
-      if (selectedTagIds.length > 0 && task.id) {
-        await Promise.all(
-          selectedTagIds.map((tagId) =>
-            fetch(`/api/tasks/${task.id}/tags`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ tagId }),
-            })
-          )
-        );
+      const taskId = (task as { id?: string }).id;
+      if (selectedTagIds.length > 0 && taskId) {
+        await attachTagIdsToTask(taskId, selectedTagIds);
       }
       return task;
     },
@@ -122,17 +125,13 @@ export function useCreateTaskModalState({
       await queryClient.cancelQueries({ queryKey: ["board", boardId] });
       const previousBoard = queryClient.getQueryData<Board>(["board", boardId]);
       if (!previousBoard) return { previousBoard };
-      const status = (defaultStatus as TaskStatus) || "TODO";
-      const optimisticTask = {
-        id: `temp-${Date.now()}`,
+      const optimisticTask = buildOptimisticTask(
         title,
-        description: description || null,
-        status,
+        description,
+        defaultStatus,
         priority,
-        assigneeId: null,
-        assignee: null,
-        order: previousBoard.tasks.filter((task) => task.status === status).length,
-      };
+        previousBoard
+      );
       queryClient.setQueryData<Board>(["board", boardId], (old) =>
         old ? { ...old, tasks: [...old.tasks, optimisticTask] } : old
       );
@@ -143,12 +142,16 @@ export function useCreateTaskModalState({
         queryClient.setQueryData(["board", boardId], context.previousBoard);
       }
     },
-    onSuccess: (task) => {
+    onSuccess: (task: unknown) => {
+      const created = task as Board["tasks"][number];
       queryClient.setQueryData<Board>(["board", boardId], (old) => {
         if (!old) return old;
         return {
           ...old,
-          tasks: [...old.tasks.filter((item) => !item.id.startsWith("temp-")), task],
+          tasks: [
+            ...old.tasks.filter((item) => !item.id.startsWith("temp-")),
+            created,
+          ],
         };
       });
       queryClient.invalidateQueries({ queryKey: ["board", boardId] });

@@ -1,6 +1,10 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import {
+  getAuditLogsForOrganization,
+  serializeAuditLogForClient,
+} from "@/lib/data/audit-logs";
 import { AuditLogsPageClient } from "./audit-logs-client";
 
 export default async function AuditLogsPage() {
@@ -9,7 +13,6 @@ export default async function AuditLogsPage() {
     redirect("/login");
   }
 
-  // Get user's organizations where they are admin
   const members = await prisma.member.findMany({
     where: {
       userId: user.id,
@@ -20,12 +23,26 @@ export default async function AuditLogsPage() {
     },
   });
 
+  const organizations = members.map((m) => ({
+    id: m.organization.id,
+    name: m.organization.name,
+  }));
+
+  const firstOrgId = organizations[0]?.id;
+  const initialAuditLogs = firstOrgId
+    ? (
+        await getAuditLogsForOrganization({
+          organizationId: firstOrgId,
+          limit: 100,
+        })
+      ).map(serializeAuditLogForClient)
+    : [];
+
   return (
     <AuditLogsPageClient
-      organizations={members.map((m) => ({
-        id: m.organization.id,
-        name: m.organization.name,
-      }))}
+      organizations={organizations}
+      initialAuditLogs={initialAuditLogs}
+      defaultOrganizationId={firstOrgId ?? ""}
     />
   );
 }

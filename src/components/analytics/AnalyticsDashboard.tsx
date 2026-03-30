@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import type { AnalyticsPayload } from "@/lib/data/analytics";
 import { VelocityChart } from "./VelocityChart";
 import { BurndownChart } from "./BurndownChart";
 import { CycleTimeChart } from "./CycleTimeChart";
@@ -10,12 +11,16 @@ interface AnalyticsDashboardProps {
   boardId?: string;
   organizationId?: string;
   sprintId?: string;
+  initialAnalytics?: AnalyticsPayload | null;
+  defaultOrganizationId?: string;
 }
 
 export function AnalyticsDashboard({
   boardId,
   organizationId,
   sprintId,
+  initialAnalytics,
+  defaultOrganizationId,
 }: AnalyticsDashboardProps) {
   const [period, setPeriod] = useState<"week" | "month" | "quarter" | "year">(
     "month"
@@ -32,8 +37,16 @@ export function AnalyticsDashboard({
 
       const res = await fetch(`/api/analytics?${params.toString()}`);
       if (!res.ok) throw new Error("Failed to fetch analytics");
-      return res.json();
+      return res.json() as Promise<AnalyticsPayload>;
     },
+    initialData:
+      initialAnalytics &&
+      organizationId === defaultOrganizationId &&
+      period === "month" &&
+      !boardId &&
+      !sprintId
+        ? initialAnalytics
+        : undefined,
   });
 
   if (isLoading) {

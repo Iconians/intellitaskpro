@@ -3,9 +3,16 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type {
   PlanForBilling,
-  SubscriptionForBilling,
+  SerializedSubscriptionForBilling,
   UsageForBilling,
 } from "@/lib/data/billing";
+import {
+  fetchSubscriptionForOrg,
+  fetchUsageForOrg,
+  patchManageSubscription,
+  patchSyncSubscription,
+  postCreateSubscription,
+} from "@/lib/subscription-client";
 
 export function usePlans(initialData?: PlanForBilling[]) {
   return useQuery({
@@ -21,23 +28,16 @@ export function usePlans(initialData?: PlanForBilling[]) {
 
 export function useSubscription(
   organizationId: string | null,
-  initialData?: SubscriptionForBilling | null
+  initialData?: SerializedSubscriptionForBilling | null
 ) {
   const isDefault = !!initialData && organizationId !== null;
 
   return useQuery({
     queryKey: ["subscription", organizationId],
-    queryFn: async () => {
-      if (!organizationId) return null;
-      const res = await fetch(
-        `/api/subscriptions?organizationId=${organizationId}`
-      );
-      if (!res.ok) {
-        if (res.status === 404) return null;
-        throw new Error("Failed to fetch subscription");
-      }
-      return res.json();
-    },
+    queryFn: () =>
+      !organizationId
+        ? Promise.resolve(null)
+        : fetchSubscriptionForOrg(organizationId),
     initialData: isDefault ? (initialData ?? undefined) : undefined,
     enabled: !!organizationId,
     refetchOnWindowFocus: true,
@@ -53,12 +53,10 @@ export function useUsage(
 
   return useQuery({
     queryKey: ["usage", organizationId],
-    queryFn: async () => {
-      if (!organizationId) return null;
-      const res = await fetch(`/api/usage?organizationId=${organizationId}`);
-      if (!res.ok) throw new Error("Failed to fetch usage");
-      return res.json();
-    },
+    queryFn: () =>
+      !organizationId
+        ? Promise.resolve(null)
+        : fetchUsageForOrg(organizationId),
     initialData: isDefault ? (initialData ?? undefined) : undefined,
     enabled: !!organizationId,
   });
@@ -68,32 +66,7 @@ export function useCreateSubscription() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      organizationId,
-      planId,
-    }: {
-      organizationId: string;
-      planId: string;
-    }) => {
-      const res = await fetch("/api/subscriptions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ organizationId, planId }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to create subscription");
-      }
-      const data = await res.json();
-      if (data.message && data.message.includes("Free plan")) {
-        window.location.reload();
-        return data;
-      }
-      if (data.url) {
-        window.location.href = data.url;
-      }
-      return data;
-    },
+    mutationFn: postCreateSubscription,
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["subscription", variables.organizationId],
@@ -104,24 +77,7 @@ export function useCreateSubscription() {
 
 export function useManageSubscription() {
   return useMutation({
-    mutationFn: async (organizationId: string) => {
-      const res = await fetch("/api/subscriptions", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ organizationId, action: "manage" }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to manage subscription");
-      }
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        throw new Error("No redirect URL received from server");
-      }
-      return data;
-    },
+    mutationFn: patchManageSubscription,
   });
 }
 
@@ -129,18 +85,7 @@ export function useSyncSubscription() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (organizationId: string) => {
-      const res = await fetch("/api/subscriptions", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ organizationId, action: "sync" }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to sync subscription");
-      }
-      return res.json();
-    },
+    mutationFn: patchSyncSubscription,
     onSuccess: (_, organizationId) => {
       queryClient.invalidateQueries({
         queryKey: ["subscription", organizationId],

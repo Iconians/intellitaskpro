@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { BoardHeaderProps, BoardHeaderFilterState } from "@/components/boards/board-header-types";
 import { useBoardHeaderData } from "@/hooks/useBoardHeaderData";
+import { patchBoard } from "@/lib/board-client";
 
 export function useBoardHeader(props: BoardHeaderProps) {
   const {
@@ -61,18 +62,8 @@ export function useBoardHeader(props: BoardHeaderProps) {
   );
 
   const updateBoardTitleMutation = useMutation({
-    mutationFn: async (name: string) => {
-      const res = await fetch(`/api/boards/${boardId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name }),
-      });
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || "Failed to update board title");
-      }
-      return res.json();
-    },
+    mutationFn: (name: string) =>
+      patchBoard(boardId, { name }, "Failed to update board title"),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["board", boardId] });
       setIsEditingTitle(false);

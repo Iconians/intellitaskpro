@@ -9,6 +9,23 @@ export type ProfileUser = {
   createdAt: Date;
 };
 
+/** Serializable for RSC → client props */
+export type SerializedProfileForClient = Omit<ProfileUser, "createdAt"> & {
+  createdAt: string;
+};
+
+export function serializeProfileForClient(
+  profile: ProfileUser
+): SerializedProfileForClient {
+  return {
+    ...profile,
+    createdAt:
+      profile.createdAt instanceof Date
+        ? profile.createdAt.toISOString()
+        : String(profile.createdAt),
+  };
+}
+
 export async function getProfileForUser(userId: string): Promise<ProfileUser | null> {
   const user = await prisma.user.findUnique({
     where: { id: userId },

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
-import { getProfileForUser } from "@/lib/data/profile";
+import { getProfileForUser, serializeProfileForClient } from "@/lib/data/profile";
 import { ProfilePageClient } from "./profile-client";
 
 export default async function ProfilePage() {
@@ -14,13 +14,7 @@ export default async function ProfilePage() {
     redirect("/login");
   }
 
-  const serializedProfile = {
-    ...profile,
-    createdAt:
-      profile.createdAt instanceof Date
-        ? profile.createdAt.toISOString()
-        : profile.createdAt,
-  };
-
-  return <ProfilePageClient initialProfile={serializedProfile} />;
+  return (
+    <ProfilePageClient initialProfile={serializeProfileForClient(profile)} />
+  );
 }
