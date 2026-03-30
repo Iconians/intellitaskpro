@@ -69,7 +69,6 @@ description: >
 * `page.tsx` must be a Server Component by default (no `"use client"`)
 * Prefer Server Components over Client Components whenever possible
 * Only use Client Components when interactivity is required (state, effects, event handlers)
-* If a component needs state or effects → isolate that logic into a small client component
 
 ### Client Component Usage
 
@@ -166,6 +165,7 @@ description: >
 * If a component has more than 3 responsibilities → split immediately
 * If state management becomes complex → extract into a hook
 * If a function is longer than 30–40 lines → refactor into smaller functions
+* If a component needs state or effects → isolate that logic into a small client component
 
 ---
 
