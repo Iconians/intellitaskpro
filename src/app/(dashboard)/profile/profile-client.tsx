@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
 
@@ -19,8 +19,8 @@ interface ProfilePageClientProps {
 }
 
 export function ProfilePageClient({ initialProfile }: ProfilePageClientProps) {
-  const queryClient = useQueryClient();
-  const [name, setName] = useState("");
+  const [profile, setProfile] = useState<InitialProfile>(initialProfile);
+  const [name, setName] = useState(initialProfile.name || "");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -28,23 +28,6 @@ export function ProfilePageClient({ initialProfile }: ProfilePageClientProps) {
   const [success, setSuccess] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
-
-  const { data: profile } = useQuery({
-    queryKey: ["userProfile"],
-    queryFn: async () => {
-      const res = await fetch("/api/user/profile");
-      if (!res.ok) throw new Error("Failed to fetch profile");
-      return res.json();
-    },
-    initialData: initialProfile,
-  });
-
-  useEffect(() => {
-    if (profile) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- sync server profile to form state for editing
-      setName(profile.name || "");
-    }
-  }, [profile]);
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: {
@@ -61,10 +44,17 @@ export function ProfilePageClient({ initialProfile }: ProfilePageClientProps) {
         const err = await res.json();
         throw new Error(err.error || "Failed to update profile");
       }
-      return res.json();
+      return res.json() as Promise<Partial<InitialProfile>>;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["userProfile"] });
+    onSuccess: (updated) => {
+      setProfile((prev) => ({
+        ...prev,
+        ...updated,
+        createdAt: prev.createdAt,
+      }));
+      if (updated.name !== undefined) {
+        setName(updated.name || "");
+      }
       setSuccess("Profile updated successfully!");
       setError(null);
       setCurrentPassword("");
@@ -128,20 +118,6 @@ export function ProfilePageClient({ initialProfile }: ProfilePageClientProps) {
     }
     deleteAccountMutation.mutate();
   };
-
-  if (!profile) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 sm:p-6 lg:p-8">
-        <div className="max-w-2xl mx-auto">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6 lg:p-8">
-            <p className="text-red-600 dark:text-red-400">
-              Failed to load profile
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 sm:p-6 lg:p-8">

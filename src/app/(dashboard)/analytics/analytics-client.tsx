@@ -2,13 +2,18 @@
 
 import { useState } from "react";
 import { AnalyticsDashboard } from "@/components/analytics/AnalyticsDashboard";
+import type { AnalyticsPayload } from "@/lib/data/analytics";
 
 interface AnalyticsPageClientProps {
   organizations: Array<{ id: string; name: string }>;
+  initialAnalytics: AnalyticsPayload | null;
+  defaultOrganizationId: string;
 }
 
 export function AnalyticsPageClient({
   organizations,
+  initialAnalytics,
+  defaultOrganizationId,
 }: AnalyticsPageClientProps) {
   const [selectedOrgId, setSelectedOrgId] = useState<string>(
     organizations[0]?.id || ""
@@ -43,7 +48,11 @@ export function AnalyticsPageClient({
             ))}
           </select>
         </div>
-        <AnalyticsDashboard organizationId={selectedOrgId} />
+        <AnalyticsDashboard
+          organizationId={selectedOrgId}
+          initialAnalytics={initialAnalytics}
+          defaultOrganizationId={defaultOrganizationId}
+        />
       </div>
     </div>
   );

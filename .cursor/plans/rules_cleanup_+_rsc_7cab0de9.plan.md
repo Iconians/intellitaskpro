@@ -22,7 +22,7 @@ todos:
     status: completed
   - id: split-app-clients
     content: ""
-    status: pending
+    status: completed
   - id: route-vs-shared-boundary
     content: page.tsx / *-client.tsx stay thin; reusable UI in src/components; pages remain Server Components by default
     status: pending
