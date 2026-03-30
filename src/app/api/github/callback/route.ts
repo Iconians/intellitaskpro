@@ -6,12 +6,18 @@ import { requireGitHubIntegrationLimit } from "@/lib/limits";
 
 const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
 const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
-const NEXTAUTH_URL = (
-  process.env.NEXTAUTH_URL || "http://localhost:3000"
-).replace(/\/$/, "");
 
 export async function GET(request: NextRequest) {
   try {
+    const requestOrigin = new URL(request.url).origin.replace(/\/$/, "");
+    const envOrigin = process.env.NEXTAUTH_URL?.replace(/\/$/, "");
+    if (envOrigin && envOrigin !== requestOrigin) {
+      console.warn(
+        `GitHub OAuth origin mismatch: NEXTAUTH_URL=${envOrigin}, request=${requestOrigin}`
+      );
+    }
+    const appOrigin = requestOrigin;
+
     await requireAuth();
     const { searchParams } = new URL(request.url);
     const code = searchParams.get("code");
@@ -20,13 +26,13 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       return NextResponse.redirect(
-        `${NEXTAUTH_URL}/boards?error=${encodeURIComponent(error)}`
+        `${appOrigin}/boards?error=${encodeURIComponent(error)}`
       );
     }
 
     if (!code) {
       return NextResponse.redirect(
-        `${NEXTAUTH_URL}/boards?error=${encodeURIComponent(
+        `${appOrigin}/boards?error=${encodeURIComponent(
           "No authorization code received"
         )}`
       );
@@ -34,7 +40,7 @@ export async function GET(request: NextRequest) {
 
     if (!GITHUB_CLIENT_ID || !GITHUB_CLIENT_SECRET) {
       return NextResponse.redirect(
-        `${NEXTAUTH_URL}/boards?error=${encodeURIComponent(
+        `${appOrigin}/boards?error=${encodeURIComponent(
           "GitHub OAuth not configured"
         )}`
       );
@@ -60,7 +66,7 @@ export async function GET(request: NextRequest) {
 
     if (tokenData.error) {
       return NextResponse.redirect(
-        `${NEXTAUTH_URL}/boards?error=${encodeURIComponent(
+        `${appOrigin}/boards?error=${encodeURIComponent(
           tokenData.error_description || tokenData.error
         )}`
       );
@@ -69,7 +75,7 @@ export async function GET(request: NextRequest) {
     const accessToken = tokenData.access_token;
     if (!accessToken) {
       return NextResponse.redirect(
-        `${NEXTAUTH_URL}/boards?error=${encodeURIComponent(
+        `${appOrigin}/boards?error=${encodeURIComponent(
           "Failed to get access token"
         )}`
       );
@@ -121,7 +127,7 @@ export async function GET(request: NextRequest) {
             await requireGitHubIntegrationLimit(board.organizationId);
           } catch (limitError) {
             return NextResponse.redirect(
-              `${NEXTAUTH_URL}/boards/${state}?error=${encodeURIComponent(
+              `${appOrigin}/boards/${state}?error=${encodeURIComponent(
                 limitError instanceof Error
                   ? limitError.message
                   : "GitHub integration limit reached"
@@ -141,25 +147,25 @@ export async function GET(request: NextRequest) {
         });
 
         return NextResponse.redirect(
-          `${NEXTAUTH_URL}/boards/${state}?github=connected`
+          `${appOrigin}/boards/${state}?github=connected`
         );
       } catch (_error) {
         return NextResponse.redirect(
-          `${NEXTAUTH_URL}/boards?error=${encodeURIComponent(
+          `${appOrigin}/boards?error=${encodeURIComponent(
             "Failed to connect GitHub"
           )}`
         );
       }
     }
 
-    return NextResponse.redirect(`${NEXTAUTH_URL}/boards?github=connected`);
+    return NextResponse.redirect(`${appOrigin}/boards?github=connected`);
   } catch (error) {
     const message =
       error instanceof Error
         ? error.message
         : "Failed to complete GitHub OAuth";
     return NextResponse.redirect(
-      `${NEXTAUTH_URL}/boards?error=${encodeURIComponent(message)}`
+      `${appOrigin}/boards?error=${encodeURIComponent(message)}`
     );
   }
 }

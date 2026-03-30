@@ -19,7 +19,7 @@ todos:
     status: completed
   - id: split-lib-email-github-ai
     content: Split lib/email, github-sync*, ai/client by domain (200-line file rule)
-    status: pending
+    status: completed
   - id: split-app-clients
     content: ""
     status: pending

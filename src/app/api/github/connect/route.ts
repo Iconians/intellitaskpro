@@ -4,10 +4,6 @@ import crypto from "crypto";
 
 const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
 
-const NEXTAUTH_URL = (
-  process.env.NEXTAUTH_URL || "http://localhost:3000"
-).replace(/\/$/, "");
-
 export async function GET(request: NextRequest) {
   try {
     await requireAuth();
@@ -23,7 +19,16 @@ export async function GET(request: NextRequest) {
     const boardId = searchParams.get("boardId");
     const state = boardId || crypto.randomBytes(16).toString("hex");
 
-    const callbackUrl = `${NEXTAUTH_URL}/api/github/callback`;
+    const requestOrigin = new URL(request.url).origin.replace(/\/$/, "");
+    const envOrigin = process.env.NEXTAUTH_URL?.replace(/\/$/, "");
+    if (envOrigin && envOrigin !== requestOrigin) {
+      console.warn(
+        `GitHub OAuth origin mismatch: NEXTAUTH_URL=${envOrigin}, request=${requestOrigin}`
+      );
+    }
+
+    const appOrigin = requestOrigin;
+    const callbackUrl = `${appOrigin}/api/github/callback`;
 
     const redirectUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(
       callbackUrl
