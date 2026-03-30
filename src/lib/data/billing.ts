@@ -120,3 +120,20 @@ export async function getUsageForOrg(
   ]);
   return { usage, actualCounts };
 }
+
+function dateFieldToIso(value: Date | string | null): string | null {
+  if (value == null) return null;
+  return value instanceof Date ? value.toISOString() : String(value);
+}
+
+/** For passing subscription from RSC to client (stable dates as ISO strings). */
+export function serializeSubscriptionForClient(
+  sub: SubscriptionForBilling | null
+): SerializedSubscriptionForBilling | null {
+  if (!sub) return null;
+  return {
+    ...sub,
+    currentPeriodStart: dateFieldToIso(sub.currentPeriodStart),
+    currentPeriodEnd: dateFieldToIso(sub.currentPeriodEnd),
+  };
+}

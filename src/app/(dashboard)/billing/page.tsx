@@ -5,9 +5,10 @@ import {
   getPlans,
   getSubscriptionForOrg,
   getUsageForOrg,
+  serializeSubscriptionForClient,
 } from "@/lib/data/billing";
+import { BillingNoOrganizations } from "@/components/billing/BillingNoOrganizations";
 import { BillingPageClient } from "./billing-client";
-import Link from "next/link";
 
 export default async function BillingPage() {
   const user = await getCurrentUser();
@@ -25,23 +26,7 @@ export default async function BillingPage() {
   });
 
   if (organizations.length === 0) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 sm:p-6 lg:p-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center py-12">
-            <p className="text-gray-500 dark:text-gray-400 mb-4">
-              No organizations found. Create one to get started.
-            </p>
-            <Link
-              href="/organizations/new"
-              className="text-blue-600 hover:text-blue-700 dark:text-blue-400"
-            >
-              Create Organization
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
+    return <BillingNoOrganizations />;
   }
 
   const defaultOrgId = organizations[0].id;
@@ -51,27 +36,11 @@ export default async function BillingPage() {
     getUsageForOrg(defaultOrgId),
   ]);
 
-  const serializedSubscription = initialSubscription
-    ? {
-        ...initialSubscription,
-        currentPeriodStart: initialSubscription.currentPeriodStart
-          ? (initialSubscription.currentPeriodStart instanceof Date
-              ? initialSubscription.currentPeriodStart.toISOString()
-              : initialSubscription.currentPeriodStart)
-          : null,
-        currentPeriodEnd: initialSubscription.currentPeriodEnd
-          ? (initialSubscription.currentPeriodEnd instanceof Date
-              ? initialSubscription.currentPeriodEnd.toISOString()
-              : initialSubscription.currentPeriodEnd)
-          : null,
-      }
-    : null;
-
   return (
     <BillingPageClient
       organizations={organizations}
       plans={plans}
-      initialSubscription={serializedSubscription}
+      initialSubscription={serializeSubscriptionForClient(initialSubscription)}
       initialUsage={initialUsage}
       defaultOrgId={defaultOrgId}
     />

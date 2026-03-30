@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { requireBoardAccess } from "@/lib/auth";
 import { BoardPageFooter } from "@/components/boards/BoardPageFooter";
-import { BoardPageClient } from "./board-client";
+import { BoardPageClient } from "@/components/boards/BoardPageClient";
 
 export default async function BoardPage({
   params,
