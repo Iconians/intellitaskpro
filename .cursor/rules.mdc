@@ -35,7 +35,6 @@ description: >
 * Keep `page.tsx`, layout, and thin client components here
 * Avoid placing reusable components directly in the route folder — they belong in `components/` or `src/components/`
 
-
 ### Shared UI Components
 
 * `components/` or `src/components/` holds all reusable UI components
@@ -83,7 +82,7 @@ description: >
 * Pass data down to Client Components via props
 * Avoid fetching data inside Client Components unless absolutely necessary
 
-### Goal
+### Objective (server vs client)
 
 * Minimize client-side JavaScript
 * Improve performance and SEO by maximizing server-rendered content
@@ -123,7 +122,7 @@ description: >
 * Avoid deep nesting (max 2–3 levels)
 * Prefer clear, descriptive names over comments
 
-### Goal
+### Objective (functions)
 
 * Small, composable functions that are easy to read, test, and reuse
 
