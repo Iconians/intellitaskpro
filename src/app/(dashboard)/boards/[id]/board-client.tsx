@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { BoardViewSelector } from "@/components/boards/BoardViewSelector";
 import { BoardHeader } from "@/components/boards/BoardHeader";
-import { BoardPageFooter } from "@/components/boards/BoardPageFooter";
 import { SprintsView } from "@/components/sprints/SprintsView";
 
 interface FilterState {
@@ -35,7 +34,7 @@ export function BoardPageClient({
   const [filters, setFilters] = useState<FilterState>({});
 
   return (
-    <div className="flex min-h-0 flex-col overflow-y-auto overflow-x-hidden overflow-touch bg-gray-50 dark:bg-gray-900 max-h-[calc(100dvh-var(--navbar-height))]">
+    <>
       <BoardHeader
         boardId={boardId}
         boardName={boardName}
@@ -63,7 +62,6 @@ export function BoardPageClient({
           </div>
         </div>
       )}
-      <BoardPageFooter />
-    </div>
+    </>
   );
 }

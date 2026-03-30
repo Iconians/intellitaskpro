@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { requireBoardAccess } from "@/lib/auth";
+import { BoardPageFooter } from "@/components/boards/BoardPageFooter";
 import { BoardPageClient } from "./board-client";
 
 export default async function BoardPage({
@@ -21,12 +22,15 @@ export default async function BoardPage({
 
   if (!board || !boardMember) return null;
   return (
-    <BoardPageClient
-      boardId={id}
-      boardName={board.name}
-      boardDescription={board.description}
-      userBoardRole={boardMember.role}
-      organizationId={board.organizationId}
-    />
+    <div className="flex min-h-0 flex-col overflow-y-auto overflow-x-hidden overflow-touch bg-gray-50 dark:bg-gray-900 max-h-[calc(100dvh-var(--navbar-height))]">
+      <BoardPageClient
+        boardId={id}
+        boardName={board.name}
+        boardDescription={board.description}
+        userBoardRole={boardMember.role}
+        organizationId={board.organizationId}
+      />
+      <BoardPageFooter />
+    </div>
   );
 }
