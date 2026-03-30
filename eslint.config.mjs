@@ -7,6 +7,19 @@ const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
   {
+    files: ["src/app/**/page.tsx"],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: 'ExpressionStatement[directive="use client"]',
+          message:
+            'App Router page.tsx must stay a Server Component. Remove "use client" and move interactivity into child components or hooks.',
+        },
+      ],
+    },
+  },
+  {
     files: ["**/*.{js,jsx,ts,tsx}"],
     rules: {
       "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_", "caughtErrorsIgnorePattern": "^_" }],

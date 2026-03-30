@@ -28,7 +28,7 @@ todos:
     status: completed
   - id: server-client-verification
     content: ""
-    status: pending
+    status: completed
   - id: function-refactor-pass
     content: "Apply function rules from rules.mdc: prefer 5-15 line focused functions; split >20-line multi-concern functions; keep nesting shallow"
     status: pending
