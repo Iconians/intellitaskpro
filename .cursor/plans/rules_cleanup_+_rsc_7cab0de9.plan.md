@@ -16,7 +16,7 @@ todos:
     status: completed
   - id: split-large-modals
     content: Refactor CreateTaskModal, TagManagerModal, TaskDetailModal; under 100 lines; minimal client surface
-    status: pending
+    status: completed
   - id: split-lib-email-github-ai
     content: Split lib/email, github-sync*, ai/client by domain (200-line file rule)
     status: pending
