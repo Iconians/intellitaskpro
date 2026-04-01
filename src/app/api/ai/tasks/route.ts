@@ -63,17 +63,28 @@ export async function POST(request: NextRequest) {
     const listItems = extractUserListItems(description);
     const listContext =
       listItems.length >= 2
-        ? `\n\nContext: The input looks like ${listItems.length} distinct list entries (bullets or numbered lines). A senior engineer would make sure each real issue or ask is owned by a task—usually one task per entry, same rough order. Merge only if two lines are clearly duplicates; split an entry into two tasks only when it genuinely needs separate workstreams (e.g. backend vs email pipeline). Do not drop a substantive item.\n`
+        ? `\n\nContext: The input looks like ${listItems.length} distinct list entries (bullets or numbered lines). A senior engineer would make sure each real issue or ask is owned by a task—usually one task per entry, same rough order. Merge only if two lines are clearly duplicates; split an entry into two tasks only when it genuinely needs separate workstreams (e.g. backend vs email pipeline). You may also add extra tasks when one line implies multiple lifecycle stages (e.g. content + implementation + launch) if the input is rich—do not drop a substantive item.\n`
         : "";
 
     const systemPrompt = `You write task breakdowns the way a strong senior/staff engineer would before a sprint: practical, shippable, and easy for teammates to pick up.
 
+Classify the input first (signals can overlap):
+- **Greenfield / new build** (new site, MVP, launch, pages, content structure, marketing copy, sitemap): favor tasks that mirror the user’s sections and deliverables. Descriptions must quote or paraphrase their bullets (Hero, Services blocks, CTAs, forms, tone)—not a generic engineering template.
+- **Maintenance / bugs** (fix, broken, regression, defect, error): favor repro → root cause → fix → regression check. Each bug task gets its own repro and verification tied to that issue.
+
+Lifecycle (use only when the input or task clearly needs it—do not pad with unrelated CI/CD tickets):
+- **Pre-development**: discovery, IA, acceptance criteria, content outline, stakeholder sign-off.
+- **Development**: implementation (UI, API, CMS, integrations) scoped to the input.
+- **DevOps**: pipelines, envs, secrets, deploy/rollback when shipping is implied.
+- **Testing**: QA, accessibility, forms, cross-browser, monitoring hooks if relevant.
+- **Hosting & launch**: DNS, SSL, production smoke, handoff when launch is in scope.
+
 How to think:
-- **Scope & granularity**: Decompose until each task is something one person could drive to done in a reasonable slice. Not micro-tickets (unless the input is already tiny), not vague epics. Prefer vertical slices when the work is feature-shaped; prefer clear repro → fix → verify when it’s bug-shaped.
-- **Titles**: Specific and action-oriented, like you’d use in Jira/Linear—read standalone and signal the real work (“Fix queue prioritization after match end” not “Fix bug” or “Work on queue”).
-- **Descriptions**: Short but senior: current behavior or gap, intended outcome, key technical angles to check, how you’ll know it’s done (acceptance / verification). Call out ambiguities or open questions in-line if the input is fuzzy—don’t invent product decisions; note what needs clarification.
-- **Grounding**: Every task must trace to the user’s input. Don’t substitute a generic “sprint template” (standalone code-review-only, CI/CD, or doc tasks) unless the user’s text is clearly asking for that deliverable.
-- **Priority & hours**: Use judgment—customer impact, risk, and uncertainty. URGENT only for real outages, security, or hard blockers.
+- **Scope & granularity**: Decompose until each task is something one person could drive to done in a reasonable slice. Large briefs (many pages/sections) may yield more tasks or subtasks per section—each description must be **unique** and tied to that slice’s text.
+- **Titles**: Specific and action-oriented (“Services page: offerings, proof, and primary CTA” not “Work on website”).
+- **Descriptions**: **Forbidden**: repeating the same boilerplate paragraph on every task (e.g. identical “Scope: clarify behavior…” on all items). Each description should read like it only applies to that task. Include acceptance / verification grounded in the user’s wording.
+- **Grounding**: Every task must trace to the user’s input. Don’t substitute a generic sprint template unless the user asked for that deliverable.
+- **Priority & hours**: Use judgment—customer impact, risk, uncertainty. URGENT only for outages, security, or hard blockers.
 
 Output ONLY valid JSON: an array of objects with keys:
 - title (string)
@@ -81,7 +92,7 @@ Output ONLY valid JSON: an array of objects with keys:
 - priority: one of LOW, MEDIUM, HIGH, URGENT
 - estimatedHours (number)
 
-Example (bug list style, senior tone):
+Example A — bug / maintenance list (senior tone):
 [
   {
     "title": "Correct post-match queue: next solo waiter, not winning duo",
@@ -90,10 +101,26 @@ Example (bug list style, senior tone):
     "estimatedHours": 6
   },
   {
-    "title": "Define and validate behavior for \"you're up next\" notification timing",
+    "title": "Define and validate behavior for \\"you're up next\\" notification timing",
     "description": "Stakeholders unclear when emails fire relative to game state. Trace send path (job vs inline), document actual timing, fix if it violates expected UX, and add logging or metrics if gaps remain.",
     "priority": "MEDIUM",
     "estimatedHours": 4
+  }
+]
+
+Example B — marketing / site structure brief (each task description must reflect different page content from the input):
+[
+  {
+    "title": "Homepage: hero, pain/solution, services teaser, process, proof, CTA",
+    "description": "Implement the Home page per the brief: hero with clear offer + who it’s for; pain → solution; high-level services; 3–4 step process; proof block; primary CTA (e.g. Book a Call). Acceptance: each listed section maps to a visible block; CTA links work; copy can be draft but structure matches the spec.",
+    "priority": "HIGH",
+    "estimatedHours": 10
+  },
+  {
+    "title": "Services page: per-offering structure and differentiation",
+    "description": "For each service in the brief, ship blocks for what it is, who it’s for, problems solved, what’s included (and optional pricing range if provided). Acceptance: visitor can compare offerings; messaging matches the supplied outline, not generic placeholder text.",
+    "priority": "HIGH",
+    "estimatedHours": 8
   }
 ]`;
 
@@ -105,7 +132,7 @@ Example (bug list style, senior tone):
         provider as "demo" | "gemini" | "ollama" | "openai" | "anthropic",
         userPrompt,
         systemPrompt,
-        { temperature: 0.32 }
+        { temperature: 0.32, responseMimeType: "application/json" }
       );
     } catch (error) {
       

@@ -4,13 +4,74 @@ function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function looksLikeWebsiteOrContentBrief(full: string, item: string): boolean {
+  const blob = `${full}\n${item}`.toLowerCase();
+  return (
+    /\b(page|pages|hero|cta|sitemap|website|web site|landing|section|sections)\b/.test(
+      blob
+    ) ||
+    /\b(services|about us|contact|home)\b.*\b(page|section)\b/.test(blob)
+  );
+}
+
+function looksLikeBugfixBrief(full: string, item: string): boolean {
+  const blob = `${full}\n${item}`.toLowerCase();
+  return /\b(fix|bug|bugs|broken|regression|defect|error|crash|patch)\b/.test(
+    blob
+  );
+}
+
+function demoDescriptionForListItem(
+  body: string,
+  index: number,
+  fullDescription: string
+): string {
+  const website = looksLikeWebsiteOrContentBrief(fullDescription, body);
+  const bug = looksLikeBugfixBrief(fullDescription, body);
+
+  if (website && !bug) {
+    return [
+      "Grounded in this slice of the brief:",
+      body,
+      "",
+      "Deliverables: Turn the bullets above into concrete page/section work—outline blocks, messaging, and CTAs; implement in the site (or hand off with a spec). Acceptance: reviewer can map each subsection to something shippable; primary CTA and forms behave; layout is acceptable on mobile.",
+    ].join("\n");
+  }
+
+  if (bug) {
+    return [
+      "Issue called out in backlog:",
+      body,
+      "",
+      "Approach: reproduce reliably, isolate root cause, implement the fix, add a regression test or written verification so it does not return.",
+    ].join("\n");
+  }
+
+  const phaseFocus = [
+    "Pre-development: confirm outcomes, constraints, and acceptance with stakeholders; note dependencies and open questions.",
+    "Development: implement end-to-end for this item in the right layers (UI, API, data, content).",
+    "DevOps: CI, environments, secrets, and a safe deploy path if this ships beyond local.",
+    "Testing: cover happy path, edge cases, and accessibility or integrations touched by this slice.",
+    "Hosting & launch: DNS/SSL, production smoke checks, monitoring or rollback notes if user-facing.",
+  ];
+  const focus = phaseFocus[index % phaseFocus.length];
+
+  return [
+    "Backlog item:",
+    body,
+    "",
+    `Suggested lens: ${focus}`,
+    "Acceptance: write checks that reference this item’s specifics—avoid copying the same generic paragraph across unrelated tasks.",
+  ].join("\n");
+}
+
 export async function generateDemoTasks(description: string) {
   const listItems = extractUserListItems(description);
   if (listItems.length >= 2) {
     await delay(1500);
-    return listItems.map((body) => ({
+    return listItems.map((body, index) => ({
       title: body.length > 140 ? `${body.slice(0, 137).trim()}…` : body,
-      description: `From backlog input:\n\n${body}\n\nScope: clarify current vs expected behavior, narrow to root cause, implement fix or change, add a check (test or manual verification) so it sticks.`,
+      description: demoDescriptionForListItem(body, index, description),
       priority: /urgent|crash|blocking|security|data loss/i.test(body)
         ? "HIGH"
         : "MEDIUM",

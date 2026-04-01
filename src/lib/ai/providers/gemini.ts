@@ -1,47 +1,67 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { GenerateAIOptions } from "@/lib/ai/client-types";
 
+/** Try newest first; 404 / not found falls back to the next id. */
+const GEMINI_MODEL_CANDIDATES = [
+  "gemini-2.5-flash",
+  "gemini-2.0-flash",
+  "gemini-1.5-flash",
+  "gemini-1.5-flash-8b",
+  "gemini-1.5-pro",
+] as const;
+
 export async function generateWithGemini(
   prompt: string,
   systemPrompt?: string,
-  options?: GenerateAIOptions
+  options?: GenerateAIOptions,
 ): Promise<string> {
   if (!process.env.GOOGLE_GEMINI_API_KEY) {
     throw new Error(
-      "GOOGLE_GEMINI_API_KEY is not set. Get a free key at https://makersuite.google.com/app/apikey"
+      "GOOGLE_GEMINI_API_KEY is not set. Get a free key at https://makersuite.google.com/app/apikey",
     );
   }
 
   const apiKey = process.env.GOOGLE_GEMINI_API_KEY.trim();
   if (!apiKey.startsWith("AIza") && apiKey.length < 30) {
     throw new Error(
-      "Invalid Gemini API key format. Please check your GOOGLE_GEMINI_API_KEY. Get a free key at https://makersuite.google.com/app/apikey"
+      "Invalid Gemini API key format. Please check your GOOGLE_GEMINI_API_KEY. Get a free key at https://makersuite.google.com/app/apikey",
     );
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const modelNames = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
   let lastError: Error | null = null;
 
-  for (const modelName of modelNames) {
+  for (const modelName of GEMINI_MODEL_CANDIDATES) {
     try {
+      const trimmedSystem = systemPrompt?.trim();
       const model = genAI.getGenerativeModel({
         model: modelName,
+        ...(trimmedSystem ? { systemInstruction: trimmedSystem } : {}),
         generationConfig: {
           temperature: options?.temperature ?? 0.7,
           topP: 0.8,
           topK: 40,
+          ...(options?.responseMimeType === "application/json"
+            ? { responseMimeType: "application/json" }
+            : {}),
         },
       });
-      const fullPrompt = systemPrompt ? `${systemPrompt}\n\n${prompt}` : prompt;
-      const result = await model.generateContent(fullPrompt);
-      const response = await result.response;
-      return response.text();
+
+      const result = await model.generateContent(prompt);
+      const response = result.response;
+      const text = response.text();
+
+      if (!text?.trim()) {
+        throw new Error(
+          "Empty response from Gemini (output may have been blocked by safety filters or the model returned no text).",
+        );
+      }
+      return text;
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
       const errorMessage = lastError.message;
       if (errorMessage.includes("not found") || errorMessage.includes("404")) {
-        console.warn(`Model ${modelName} not available, trying next...`);
+        console.warn(`Gemini model ${modelName} not available, trying next…`);
         continue;
       }
       break;
@@ -56,7 +76,7 @@ export async function generateWithGemini(
       errorMessage.includes("403")
     ) {
       throw new Error(
-        "Invalid or missing Gemini API key. Please check your GOOGLE_GEMINI_API_KEY environment variable. Get a free key at https://makersuite.google.com/app/apikey"
+        "Invalid or missing Gemini API key. Please check your GOOGLE_GEMINI_API_KEY environment variable. Get a free key at https://makersuite.google.com/app/apikey",
       );
     }
     if (
@@ -65,7 +85,7 @@ export async function generateWithGemini(
       errorMessage.includes("429")
     ) {
       throw new Error(
-        "Gemini API rate limit reached. Free tier allows 15 requests per minute. Please wait and try again."
+        "Gemini API rate limit reached. Free tier allows 15 requests per minute. Please wait and try again.",
       );
     }
     if (errorMessage.includes("not found") || errorMessage.includes("404")) {
@@ -75,14 +95,16 @@ export async function generateWithGemini(
           `2. The API endpoint is incorrect\n` +
           `3. Your API key doesn't have access to these models\n\n` +
           `Please verify your GOOGLE_GEMINI_API_KEY at https://makersuite.google.com/app/apikey\n` +
-          `Original error: ${errorMessage}`
+          `Original error: ${errorMessage}`,
       );
     }
 
     throw new Error(
-      `Gemini API error: ${errorMessage}. Please check your API key and model availability.`
+      `Gemini API error: ${errorMessage}. Please check your API key and model availability.`,
     );
   }
 
-  throw new Error("All Gemini models failed. Please check your API key and try again.");
+  throw new Error(
+    "All Gemini models failed. Please check your API key and try again.",
+  );
 }
