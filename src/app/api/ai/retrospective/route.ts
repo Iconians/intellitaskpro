@@ -77,7 +77,8 @@ Total Tasks: ${sprint.tasks.length}
       aiResponse = await generateWithAI(
         provider as "demo" | "gemini" | "ollama" | "openai" | "anthropic",
         userPrompt,
-        systemPrompt
+        systemPrompt,
+        { responseMimeType: "application/json" }
       );
     } catch (error) {
       console.error("AI generation failed:", error);
